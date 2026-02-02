@@ -331,6 +331,7 @@ ggplot(normal_distribution_df, aes(x = value)) +
 #### 13) What are your impressions of the shape and distribution of this dataset now that it is presented as a histogram? If your impression has changed, how is that possible?
 
 ```         
+The histogram shows a clear, symmetric, bell-shaped distribution centered around zero. This view makes the overall shape of the data easier to see than the scatter plot, which is why the impression becomes clearer when the data are presented as a histogram.
 ```
 
 ## `dnorm()`
@@ -348,6 +349,7 @@ dnorm(2, mean = mean, sd = sd)
 #### 13b) Gut check: look at the plot, does this number make sense? Why or why not?
 
 ```         
+Yes, the value makes sense. The histogram shows that values near 2 occur in the tails of the distribution and are less common than values near the mean, but they are not extremely rare. The density value reflects this lower but reasonable likelihood.
 ```
 
 Now let's return to our `df` dataset
@@ -357,6 +359,7 @@ Now let's return to our `df` dataset
 *Hint: you can use what we just learned about bin sizes to "zoom" into the data*
 
 ```         
+Based on the histogram, a reasonable visual estimate of the mean hindfoot length for Dipodomys merriami is around 36 mm. The mode also appears to be close to 36 mm, as this is where the highest bar in the histogram occurs.
 ```
 
 #### 15a) Calculate the probability that a value randomly drawn from our *D. merriami* hindfoot length is equal to your visual estimate of the **mean**.
@@ -381,28 +384,31 @@ sd <- df %>%
 ```
 
 ```{r}
-
+dnorm(36, mean = mean, sd = sd)
 ```
 
 #### 15b) From these results do your visual estimates seem accurate? Why or why not do you think that is?
 
 ```         
+This value is extremely small because the probability of drawing any exact value from a continuous distribution is effectively zero, even at the mean.
 ```
 
 #### 16a) Calculate the probability that a value randomly drawn from our *D. merriami* hindfoot length is equal to your visual estimate of the **mode**.
 
 ```{r}
-
+dnorm(36, mean = mean, sd = sd)
 ```
 
 #### 16b) From these results do your visual estimates seem accurate? Why or why not do you think that is?
 
 ```         
+Yes, this result makes sense. Even though the mode represents the most common value visually, the probability of drawing any exact value from a continuous distribution is effectively zero. The histogram shows that values near the mode are common, not that the exact value itself has a high probability.
 ```
 
 #### 17) Opinion: what was the most useful and least useful aspect of this lab assignment? Why is that the case for you?
 
 ```         
+The most useful aspect of this lab was learning how to use group_by() and ungroup() correctly, as it clarified how grouped operations affect downstream calculations. The least useful aspect was calculating the probability of exact values in continuous distributions, since those probabilities are always extremely small and less informative than looking at ranges of values.
 ```
 
 # References
@@ -410,4 +416,5 @@ sd <- df %>%
 #### 18) What outside sources did you use to help you complete this work (including books, forums, LLMs, etc.)? Describe how they were used:
 
 ```         
+This is exactly like what I did for Matt Dean's Field Mammology Course. In addition, if I encountered any roadblocks/did understand the message I was recieving I did honestly use ChatGPT to explain the meaning behind the message. 
 ```
