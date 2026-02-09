@@ -1,0 +1,353 @@
+# Working with real predator/prey data
+
+## Exercise 0: Set-up environment and load in data `Blasius_et_al_2019.csv`[@blasius2020] using the package `readr`
+
+```{r setup, include=FALSE}
+# Load packages
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+# Read in the CSV from Desktop (Mac path)
+raw_data <- read_csv("~/Desktop/Blasius_et_al_2019.csv")
+
+# Quick check
+head(raw_data)
+
+
+```
+
+# Introduction
+
+In this lab, you will further explore predator/prey dynamics utilizing real-world data.
+
+## Exercise 1: Explore your dataset and describe what you see
+
+```{r}
+
+# Look at the first few rows
+head(raw_data)
+
+
+
+```
+
+```{r}
+
+# Summary statistics for each column
+summary(raw_data)
+
+```
+
+```{r}
+# Dimensions: rows and columns
+dim(raw_data)
+
+```
+
+```{r}
+# Column names
+names(raw_data)
+
+```
+
+```{r}
+# Structure of the dataset (types of each column)
+str(raw_data)
+
+```
+
+```{r}
+# View in a spreadsheet-style window (optional; may error on some Macs)
+# View(raw_data)
+
+
+```
+
+```{r}
+
+ggplot(raw_data, aes(x = `rotifers (animals/ml)`)) +
+  geom_histogram() +
+  labs(
+    title = "Distribution of Rotifers (Predator)",
+    x = "Rotifers (animals/ml)",
+    y = "Count"
+  )
+
+
+```
+
+```{r}
+ggplot(raw_data, aes(x = `algae (10^6 cells/ml)`)) +
+  geom_histogram() +
+  labs(
+    title = "Distribution of Algae (Prey)",
+    x = "Algae (10^6 cells/ml)",
+    y = "Count"
+  )
+
+```
+
+```{r}
+
+ggplot(raw_data, aes(x = `algae (10^6 cells/ml)`, y = `rotifers (animals/ml)`)) +
+  geom_point() +
+  labs(
+    title = "Rotifers vs Algae",
+    x = "Algae (10^6 cells/ml)",
+    y = "Rotifers (animals/ml)"
+  )
+
+
+```
+
+### Q: Describe the dataset and what you see. (*Hint: Think about things like column names and what they mean (e.g. describe the species in the dataset), unique values in key columns, size of dataset, ranges of values for certain columns, aspect of the dataset that you may need to clean, what the distributions of the values look like for given columns, etc.*)
+
+``` plaintext
+```
+
+## Exercise 1: Clean your data using dplyr. *Hint: Were there columns in your data that contained data that was a not a number? For this assignment you can remove entire rows that are problematic.*
+
+```{r}
+
+# Clean the data: remove rows with NA/NaN in key columns
+clean_data <- raw_data %>%
+  filter(
+    !is.na(`time (days)`),
+    !is.na(`algae (10^6 cells/ml)`),
+    !is.na(`rotifers (animals/ml)`)
+  )
+
+# View the cleaned data
+summary(clean_data)
+dim(clean_data)
+head(clean_data)
+
+
+```
+
+## Exercise 2: Plot predator population until day 4 using the `ggplot2` functions `geom_line()`, `xlim(start_time, end_time)`and`ylim(0, 50)`
+
+```{r}
+
+# Define the time range
+start_time <- 0
+end_time <- 4
+
+# Plot predator population over time
+
+
+
+```
+
+### Q: What type of response curve do you see? Explain your reasoning.
+
+``` plaintext
+```
+
+### Q: Why might this predator have this type of response curve?
+
+``` plaintext
+```
+
+## Exercise 4: Plot the predator and prey populations over time in the same chart.
+
+```{r}
+# Define the time range
+start_time <- 0
+end_time <- 4
+
+# Plot predator (rotifers) population over time
+ggplot(clean_data, aes(x = `time (days)`, y = `rotifers (animals/ml)`)) +
+  geom_line() +
+  xlim(start_time, end_time) +
+  ylim(0, 50) +
+  labs(
+    title = "Predator (Rotifers) Population from Day 0 to Day 4",
+    x = "Time (days)",
+    y = "Rotifers (animals/ml)"
+  )
+
+
+```
+
+### Q: Are you able to interpret this chart? Why or why not?
+
+``` plaintext
+```
+
+## Exercise 5: Use the following code to plot predator and prey populations over time in the same chart (*Note that there are two Y-axes displayed in the same plot*).
+
+```{r}
+
+library(scales)
+
+ggplot(clean_data, aes(x = `time (days)`)) +
+  geom_line(aes(y = `rotifers (animals/ml)`), color = "blue") +
+  geom_line(aes(y = rescale(`algae (10^6 cells/ml)`, to = c(0, max(clean_data$`rotifers (animals/ml)`)))), color = "green") +
+  scale_y_continuous(
+    name = "Rotifers (animals/ml)",
+    sec.axis = sec_axis(~ rescale(.x, from = c(0, max(clean_data$`rotifers (animals/ml)`)), to = c(min(clean_data$`algae (10^6 cells/ml)`), max(clean_data$`algae (10^6 cells/ml)`))), name="Algae (10^6 cells/ml)")
+  ) +
+  labs(title = "Predator and Prey Populations Over Time", x = "Time (days)") 
+
+
+
+```
+
+### Q: What do you observe?
+
+``` plaintext
+```
+
+### Q: Do you think this system is stable or unstable? Explain.
+
+``` plaintext
+```
+
+# Rosenzweig-MacArthur model
+
+## Exercise 6: Imagine a scenario where the rotifers are introduced to a new algae system and gradually improve at handling prey over time. Using the Rosenzweig-MacArthur model equations from lab, model this scenario with `Time <- seq(0, 2000, by = 0.1)`.
+
+$$
+r = 0.5\\
+a = 0.01\\
+f = 0.1\\
+q = 0.2\\
+h = 0.001\\
+K = 1000\\
+$$
+```{r}
+install.packages("deSolve")
+```
+```{r}
+
+# Set the parameters
+library(deSolve)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+r <- 0.5
+a0 <- 0.01      # starting attack rate (given)
+a1 <- 0.03      # improved attack rate (choose a higher value to represent learning)
+tau <- 500      # how fast improvement happens (bigger = slower improvement)
+
+f <- 0.1
+q <- 0.2
+h <- 0.001
+K <- 1000
+
+# Time vector
+Time <- seq(0, 2000, by = 0.1)
+
+# Initial conditions (choose reasonable starting values)
+# N = algae, P = rotifers
+state <- c(N = 800, P = 10)
+
+# Define the function (Rosenzweig–MacArthur with time-varying a(t))
+rm_model <- function(t, state, parms) {
+  with(as.list(c(state, parms)), {
+
+    # Rotifers gradually improve at capturing/handling prey:
+    # attack rate increases smoothly from a0 to a1
+    a_t <- a0 + (a1 - a0) * (1 - exp(-t / tau))
+
+    # Holling type II functional response
+    predation <- (a_t * N * P) / (1 + a_t * h * N)
+
+    dN <- r * N * (1 - N / K) - predation
+    dP <- f * predation - q * P
+
+    list(c(dN, dP))
+  })
+}
+
+# Use deSolve
+out <- ode(y = state, times = Time, func = rm_model,
+           parms = list(r = r, a0 = a0, a1 = a1, tau = tau, f = f, q = q, h = h, K = K))
+
+# Convert to dataframe
+out_df <- as.data.frame(out)
+
+# (Optional) make it long for easy ggplotting
+out_long <- out_df %>%
+  pivot_longer(cols = c(N, P), names_to = "pop", values_to = "value")
+
+# Plot (two lines; different scales are normal here)
+ggplot(out_long, aes(x = time, y = value, color = pop)) +
+  geom_line() +
+  labs(
+    title = "Rosenzweig–MacArthur Model with Gradual Predator Improvement (a(t) increases)",
+    x = "Time",
+    y = "Population"
+  )
+
+
+
+```
+
+### Q: Do you think this system is stable or unstable? Explain.
+
+``` plaintext
+```
+
+# Functional Responses
+
+## Exercise 7:
+
+As another way to represent functional response curves, represent the code below as a dataframe using `df <- data.frame(N = seq(0, 50, length.out = 100))` and plot it using the `ggplot()` `stat_function()` function:
+
+$$
+F = \frac{bN^{1+q}}{1+bhN^{1+q}}
+$$
+
+```{r, echo = FALSE}
+# Set parameters
+b <- 0.01
+q <- 0.2
+h <- 0.001
+
+# Create a data frame for plotting
+df <- data.frame(N = seq(0, 50, length.out = 100))
+
+# Define the functional response function
+F_fun <- function(N) {
+  (b * N^(1 + q)) / (1 + b * h * N^(1 + q))
+}
+
+# Plot the function using ggplot2 and stat_function()
+ggplot(df, aes(x = N)) +
+  stat_function(fun = F_fun) +
+  labs(
+    title = "Functional Response Curve",
+    x = "Prey density (N)",
+    y = "Feeding rate (F)"
+  )
+
+```
+
+### Q: What do you notice as you vary the values of the terms?
+
+``` plaintext
+```
+
+### Q: Which response curves do you observe?
+
+```         
+```
+
+------------------------------------------------------------------------
+
+#### Opinion: what was the most useful and least useful aspect of this lab assignment? Why is that the case for you?
+
+``` plaintext
+```
+
+#### What outside sources did you use to help you complete this work (including books, forums, LLMs, etc.)? Describe how they were used:
+
+``` plaintext
+```
+
+# References
