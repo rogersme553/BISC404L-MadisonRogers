@@ -1,419 +1,409 @@
-#### 0) Clear your environment
+# Exercise 0: Appropriately set-up your environment (clear environment, load packages, set working directory if needed, etc.)
 
-```{r include=FALSE}
+```{r setup, include=FALSE}
 
-rm(list=ls()) 
+rm(list = ls())
 
-```
-
-#### 1) Using the `require()` or `library()` function, load the packages `ggplot2`[@ggplot2], `dplyr`[@dplyr], and `ratdat`[@ratdat] which contains the dataset `complete`.
-
-```{r include=FALSE}
 library(ggplot2)
 library(dplyr)
-library(ratdat)
 
 ```
 
-::: callout-caution
-## Warning: there is no package called 'ratdat'
+# Introduction
 
-If you receive this warning, run `install.packages("ratdat")` before you run the line `require("ratdat")`
+In this lab, we will delve deeper into population dynamics, exploring both density-independent and density-dependent growth, as well as interspecific interactions. You will use R to simulate these ecological processes and interpret the results of your simulations.
+
+# Exercise 1:
+
+Load the `tribbles.rds` dataset provided.
+
+```{r}
+
+tribbles <- readRDS("tribbles.rds")
+
+```
+
+::: callout-tip
+## \`.Rds\` and \`.Rda\` files in R
+
+`.rds` and `.rda` (or `.Rdata`) files are used to store data natively in R.
+
+The main advantage of `.rda` files is that they can contain a variety of data in a single file (objects, plots, functions, packages, etc.), however when loading a `.rda` file you run the risk of over-writing existing objects, plots, etc. with the same name.
+
+`.rds` files can only contain a single data structure. A benefit of this file type is that loading a `.rds` file will not overwrite data structures with the same name.
 :::
 
-#### 2) Inspect the dataset `complete` from the package `ratdat` using `head()`, `summary()`, and `View()`
+### Inspect (using `head()`, `summary()`, `str()`, etc.) and describe the dataset (*hint: what do you need to clean?)*:
 
 ```{r}
-head(complete)
 
-```
+head(tribbles)
 
-```{r}
-summary(complete)
 ```
 
 ```{r}
 
+
 ```
 
-\
+```{r}
+summary(tribbles)
+str(tribbles)
 
-#### 3a) Based on this inspection, describe the dataset:
-
-```         
-The dataset contains 31,438 rows and 13 columns describing small mammal observations, including sampling date, plot information, species identity, sex, and morphological measurements such as hindfoot length and weight. The data span multiple years and include some missing values 
 ```
 
-Here is how we can remove the `NA` values from the hindfoot length column using `dplyr` to make this assignment simpler:
+```{=plaintext}
+```
+### Clean the dataset based on the cleaning we performed in the previous homework assignment
+
+```{r}
+# Clean the data
+
+tribbles_clean <- tribbles %>%
+  select(Days, Count) %>%
+  filter(!is.na(Days), !is.na(Count)) %>%
+  arrange(Days)
+
+head(tribbles_clean)
+
+
+```
+
+### **Step 1: Visualizing Real Data**
+
+Write an R script to plot the population size of tribbles over **5 days** using `ggplot2` for plotting and `dplyr` for data wrangling. Plot using the `geom_line()` function.
 
 ```{r}
 
-# Clean data by removing NAs from dataset
-complete <- complete %>%
-  filter(!is.na(hindfoot_length))
+# Filter the data
 
+
+# Plot the filtered data. Hint, use xlim(c(1, 5)) to set limits for the x-axis to only show up to day 5. You may need to use ylim(...) as well.
+
+# Filter the data
+tribbles_5 <- tribbles_clean %>%
+  filter(Days <= 5)
+
+# Plot the filtered data
+ggplot(tribbles_5, aes(x = Days, y = Count)) +
+  geom_line() +
+  xlim(c(1, 5))
 ```
 
-#### 3b) Refer to the in-class lab and do not be afraid to play with the code. Why did we use `filter()` to accomplish this? Why did we not use `select()`?
+### Q1: What general trend do you observe in the growth of the tribble population over this period? Does the population appear to be increasing, decreasing, or remaining stable?
 
-```         
-filter() was used because it subsets the data by rows based on a condition, whereas select() only works on columns and cannot remove rows with missing values.
+```{=plaintext}
+The tribble population is increasing rapidly over the five days, with growth accelerating each day rather than remaining constant or stable.
 ```
+### Q2: Does population growth appear to be discrete or continuous? Why?
 
-#### 4) Using `dplyr`, create a new dataframe named `df` consisting of only the columns `genus`, `species`, and `hindfoot_length` from the `complete` dataframe from the package `ratdat`. *Hint: how do we select certain columns using `dplyr`?*
+```{=plaintext}
+The growth is discrete because population size is recorded at whole day intervals and changes in stepwise jumps between days.
+```
+### Q3: Does population growth appear to be density-independent? Why or why not? Which equation, if any, do you think might best fit the trend?
+
+```{=plaintext}
+The growth appears independent of density over this period because there is no sign of slowing as population size increases. A discrete exponential growth model using lambda best fits this trend.
+```
+### Q4: If you think it may be a density-dependent trend, what would you estimate is the carrying capacity of the tribble population?
+
+```{=plaintext}
+There is no clear evidence of a carrying capacity within the first five days, this is because the population does not level off/plateau or slow down.
+```
+### Q5: What are some biological, ecological, or stoichastic explanations that could explain the observed trend?
+
+```{=plaintext}
+This pattern could be caused by high reproduction rates, abundant resources, and a lack of predators, disease, or competition limiting the population.
+```
+### Q6: What might be some expected consequences of this trend for the tribble population for the people living on the ship?
+
+```{=plaintext}
+If this trend continues, the population could quickly overwhelm the ship’s space and resources, causing overcrowding and depletion of resources.
+```
+### **Step 2: Modeling Population Growth**
+
+Now we are going to try to model population growth based on the curve you see from your data. If we accept these models, they will allow us to make generalizations and longer term predictions.
+
+1.  Use **dplyr** to extract the **initial population size** $N_{0}$ (*hint, remember `pull()` from the previous assignment*) and **growth rate** $\lambda$. Think about the situations where you would need to use $r$ versus $\lambda$
+2.  We assume the per capita growth rate $\lambda$ can be estimated as the ratio between population sizes. In our case, use $\frac{N_{0 + 1}}{N_{0}}$ to estimate $\lambda$.
+3.  If you think you need to include $K$, just set $K$ equal to the largest population number within your current timespan.
 
 ```{r}
-df <- complete %>%
-  select(genus, species, hindfoot_length)
+# Extract initial population size (N0). Hint: remember `pull()` from the previous lab assignment
+N0 <- tribbles_5 %>%
+  filter(Days == 1) %>%
+  pull(Count)
+
+# Extract consecutive population size (day 2)
+N1 <- tribbles_5 %>%
+  filter(Days == 2) %>%
+  pull(Count)
+
+# Calculate Lambda
+lambda <- N1 / N0
+
+# Calculate r if necessary
+r <- log(lambda)
+
+# Print estimated values
+N0
+N1
+lambda
+r
 
 ```
 
-#### 5) Create a new column named "genus_species" that combines genus and species names into a single cell with an underscore as a separator using the `paste()` function (i.e. if *Homo* is in the genus column, and *sapiens* is in the species column, the new "genus_species" column would have *Homo_sapiens*). Refer to the `paste()` help file if needed. *Hint: how do we create new columns using `dplyr`?*
+Like we did in lab, use `sapply()` to calculate when the tribble population size for each day until the population exceeds **111,537 tribbles** based on our current assumptions
+
+\- If you think density-independent, you can use lambda directly in your equation.
+
+\- If you think logistic growth, remember from lab how to convert lambda to r. We will assume K is equal to the largest population number within the given time span.
+
+\- Be sure to choose the function inside of `sapply()` intentionally, either the exponential or logistic equation from the lab handout.
 
 ```{r}
+# Set the appropriate t
+t <- 0:20
 
-df <- df %>%
-  mutate(genus_species = paste(genus, species, sep = "_"))
+# Use sapply() to model population sizes (discrete exponential growth)
+Nt <- sapply(t, function(tt) {
+  N0 * (lambda ^ tt)
+})
+
+# Find the first day the population exceeds 111,537
+t[which(Nt > 111537)[1]]
+
 ```
 
-Before contiuning with our data, first let's learn about the `group_by` function.
-
-::: callout-caution
-## group_by() and ungroup()
-
-`dplyr`[@dplyr]'s `group_by()` function is a powerful and convenient way to separate data into groups and perform operations on each group. However, it is important to remember to **always** use `ungroup()` after you are done with your group operations. This is because `group_by()` will continue to affect your data until you use `ungroup()`. This is even more dangerous because visually you will not see any difference in your data after using `group_by()`.
-
-Here is a dummy dataset for us to play with:
+Plot your results like we did in lab:
 
 ```{r}
 
-# Generating some dummy data
-df_dummy <- data.frame(
-  group = c(1, 2, 3, 4, 5, 6),
-  location = c("A", "A", "B", "B", "C", "C"),
-  number = c(5, 3, 4, 6, 7, 2),
-  distance_traveled = c(1, 1, 5, 6, 3, 2)
+# Convert to dataframe
+model_df <- data.frame(
+  Day = t,
+  Population = Nt
 )
 
+# Plot
+ggplot(model_df, aes(x = Day, y = Population)) +
+  geom_line()
+
+
 ```
 
-#### 6a) Inspect and describe the dataset
+### Q: What does this plot imply about the population growth of tribbles on the ship?
+
+```{=plaintext}
+The plot implies extremely rapid, exponential population growth, where the tribble population increases slowly at first and then explodes to very large numbers in a short time, quickly exceeding any reasonable limits.
+```
+### Q: Does the shape of this model match with your plot of the real data above? Do you think it is an accurate model of our system?
+
+```{=plaintext}
+The shape matches the real data over the short time span because both show rapidly accelerating growth. However, this model is likely unrealistic long-term because it does not include any limiting factors such as resource availability or space, so it probably overestimates future population size.
+```
+
+------------------------------------------------------------------------
+
+# Exercise 2:
+
+### **Step 1: Visualizing Real Data**
+
+Now plot over 8 days and answer the questions below based on this plot.
 
 ```{r}
 
-df_dummy
-glimpse(df_dummy)
-summary(df_dummy)
+# Filter the data
+tribbles_8 <- tribbles_clean %>%
+  filter(Days <= 8)
+
+# Plot the filtered data
+ggplot(tribbles_8, aes(x = Days, y = Count)) +
+  geom_line() +
+  xlim(c(1, 8))
+
 ```
 
-```         
+### Q1: What general trend do you observe in the growth of the tribble population over this period? Does the population appear to be increasing, decreasing, or remaining stable?
+
+```{=plaintext}
+The population increases rapidly at first and then begins to slow and level off by days 7–8, indicating that growth is no longer accelerating.
+```
+### Q2: Does population growth appear to be discrete or continuous? Why?
+
+```{=plaintext}
+The growth is discrete because the population is measured at whole day intervals and changes in stepwise jumps between days.
+```
+### Q3: Does population growth appear to be density-independent? Why or why not? Which equation, if any, do you think might best fit the trend?
+
+```{=plaintext}
+The growth appears dependent of density because the rate of increase slows as the population becomes larger. A logistic growth model best fits this trend.
+```
+### Q4: If you think it may be a density-dependent trend, what would you estimate is the carrying capacity of the tribble population?
+
+```{=plaintext}
+The carrying capacity appears to be around 4,000 - 4,500 tribbles, where the population begins to level off/plateau.
+```
+### Q5: What are some biological, ecological, or stoichastic explanations that could explain the observed trend?
+
+```{=plaintext}
+This trend could be explained by limited space or food, increased competition, or waste buildup as the population grows.
+```
+### Q6: What might be some expected consequences of this trend for the tribble population for the people living on the ship?
+
+```{=plaintext}
+As the population approaches carrying capacity, slowing of growth, but the ship will still face overcrowding and strain on resources.
+```
+### **Step 2: Modeling Population Growth**
+
+Now we are going to try to model population growth based on the curve you see from your data. If we accept these models, they will allow us to make generalizations and longer term predictions.
+
+1.  Use **dplyr** to extract the **initial population size** $N_{0}$ (*hint, remember `pull()` from the previous assignment*) and **growth rate** $\lambda$. Think about the situations where you would need to use $r$ versus $\lambda$
+2.  We assume the per capita growth rate $\lambda$ can be estimated as the ratio between population sizes. In our case, use $\frac{N_{0 + 1}}{N_{0}}$ to estimate $\lambda$.
+3.  If you think you need to include $K$, just set $K$ equal to the largest population number within your current timespan.
+
+```{r}
+# Extract initial population size (N0)
+N0_8 <- tribbles_8 %>%
+  filter(Days == 1) %>%
+  pull(Count)
+
+# Extract consecutive population size (day 2)
+N1_8 <- tribbles_8 %>%
+  filter(Days == 2) %>%
+  pull(Count)
+
+# Calculate lambda
+lambda_8 <- N1_8 / N0_8
+
+# Calculate r only if necessary (for logistic growth)
+r_8 <- log(lambda_8)
+
+# Set carrying capacity K as the largest population in this time span
+K_8 <- max(tribbles_8$Count)
+
+# Print estimated values
+N0_8
+N1_8
+lambda_8
+r_8
+K_8
+
+
+
 ```
 
-Our goal is to find total distance traveled in each location and the total count of individuals across groups
+Like we did in lab, use `sapply()` to calculate when the tribble population size for each day until the population exceeds **111,537 tribbles** based on our current assumptions
 
-First let's group by location.
+\- If you think density-independent, you can use lambda directly in your equation.
+
+\- If you think logistic growth, remember from lab how to convert lambda to r. We will assume K is equal to the largest population number within the given time span.
+
+\- Be sure to choose the function inside of `sapply()` intentionally, either the exponential or logistic equation from the lab handout.
 
 ```{r}
 
-# Grouping by location
-df_grouped1 <- df_dummy %>%
-  group_by(location)
+# Set the appropriate t
+t2 <- 0:50
+
+# Use sapply() to model population sizes (logistic growth)
+Nt2 <- sapply(t2, function(tt) {
+  (K_8 * N0_8 * exp(r_8 * tt)) / (K_8 + N0_8 * (exp(r_8 * tt) - 1))
+})
+
+# Check when (if ever) it exceeds 111,537
+t2[which(Nt2 > 111537)[1]]
 
 ```
 
-#### 6a) Inspect the grouped dataset and describe any changes you see anywhere throughout the Rstudio interface
-
-After grouping the dataset by `location`, there is **no visible change** to the number of rows, columns, or the values shown in the table. The dataset still contains 6 rows and 4 columns with the same summary statistics. The only noticeable change in the RStudio output is the **“Groups: location”** indicator, which shows that the data are now grouped internally even though the table itself looks the same
+Plot your results like we did in lab:
 
 ```{r}
 
-```
+# Create dataframe
+model_df2 <- data.frame(
+  Day = t2,
+  Population = Nt2
+)
 
-```         
-
-Besides the small "Groups: ..." at the top of the output, the data does not appear any different after grouping here.
-```
-
-You are beginning to see why using `group_by()` without `ungroup()` can be dangerous.
-
-Now try to meet the goal of finding the distance traveled in each location by creating the column "group_distance" and using the `sum()` function
-
-```{r}
-df_grouped1 <- df_grouped1 %>%
-  mutate(group_distance = sum(distance_traveled))
-
-df_grouped1
+# Plot
+ggplot(model_df2, aes(x = Day, y = Population)) +
+  geom_line()
 
 ```
 
-#### 6b) Inspect and describe the changes. Is that what we were aiming for? Why or why did it not work?
+### Q: What does this plot imply about the population growth of tribbles on the ship?
 
-```{r}
+```{=plaintext}
+The plot shows that the tribble population grows rapidly at first and then slows and levels off/plateaus near a carrying capacity of ~4,200 individuals.
+```
+### Q: Does the shape of this model match with your plot of the real data above? Do you think it is an accurate model of our system?
 
+```{=plaintext}
+Yes, the shape matches the real data because both show fast early growth followed by a slowdown and leveling off. This suggests the logistic model is a reasonable approximation of the system over this time period.
 ```
 
-```         
-After creating group_distance, a new column is added that shows the total distance traveled for each location. The value is repeated for both rows within the same location because the data are grouped. This meets the goal of calculating distance by location, but it does not collapse the data to one row per location since mutate() adds values to each row rather than summarizing.
-```
+------------------------------------------------------------------------
 
-#### 6c) Now try to meet the goal of finding the total number of individuals across groups by adding the column "sum".
+# Exercise 3:
 
-```{r}
-df_grouped1 <- df_grouped1 %>%
-  mutate(group_distance = sum(distance_traveled))
+### **Step 1: Visualizing Real Data**
 
-df_grouped1
-
-
-```
-
-#### 6d) Inspect and describe the changes. Is that what we were aiming for? Why or why did it not work?
+Now plot all time points from the dataset and answer the questions below based on this plot. Use the function `geom_step()` to plot the data.
 
 ```{r}
 
-```
+# Create new dataframe without filtering
+tribbles_all <- tribbles_clean
 
-```         
-After adding the sum column, the dataset still has the same rows and values, but a new column is created that contains the total number of individuals within each location. The sum is calculated separately for locations A, B, and C and repeated for each row in that location. This is not the overall total across all groups because the data are still grouped by location.
-```
-
-We have 3 sum values instead of the desired overall sum!
-
-This is because we did not `ungroup()` like we *always* should. So even thought there is no visual difference after using `group_by()`, not using `ungroup()` affects your code downstream.
-
-Now try repeating the above process in one pipe (creating new dataframe `df_grouped2` by grouping `df_dummy` by location, creating the group_distance column, ungrouping by calling the function `ungroup()` with no arguments, then creating the sum column).
-
-```{r}
-df_grouped2 <- df_dummy %>%
-  group_by(location) %>%
-  mutate(group_distance = sum(distance_traveled)) %>%
-  ungroup() %>%
-  mutate(sum = sum(number))
-
-df_grouped2
+# Plot
+ggplot(tribbles_all, aes(x = Days, y = Count)) +
+  geom_step()
 
 ```
 
-After running the one pipe version, two new columns are added. `group_distance` gives the total distance traveled within each location, so it is repeated for both rows in the same location. After `ungroup()`, the `sum` column is calculated across the entire dataset, so it shows one overall total for all individuals and is the same for every row. This is what we were aiming for because it separates the grouped calculation from the overall calculation.
-:::
+### Q: What general trend do you observe in the growth of the tribble population over this period? Does the population appear to be increasing, decreasing, or remaining stable?
 
-Now that you have learned about `group_by()` and the importance of `ungroup()`, how *every time* we use `group_by()` we need to *always* remember to `ungroup()`, let's return to our `df` dataset.
+```{=plaintext}
+The population rapidly increases to begfin and then fluctuates overtime around a pretty stable range rather than continuing to increase indefinitely.
+```
+### Q: Does population growth appear to be discrete or continuous? Why?
 
-#### 7) In our dataframe `df`, create a new column called "mean_hindfoot" that takes the average hindfoot length grouped by species ("genus_species")
+```{=plaintext}
+The growth is discrete because the population is recorded at daily time steps and changes in stepwise jumps between days.
+```
+### Q: Does population growth appear to be density-independent? Why or why not? Which equation, if any, do you think might best fit the trend?
 
-```{r}
-df <- df %>%
-  group_by(genus_species) %>%
-  mutate(mean_hindfoot = mean(hindfoot_length, na.rm = TRUE)) %>%
-  ungroup()
+```{=plaintext}
+The growth appears dependent of density because the population does not grow without limit and instead fluctuates around a typical range. A logistic growth model with environmental variation would best fit this pattern.
+```
+### Q: If you think it may be a density-dependent trend, what would you estimate is the carrying capacity of the tribble population?
 
-df %>%
-  select(genus_species, hindfoot_length, mean_hindfoot) %>%
-  head(10)
+```{=plaintext}
+The carrying capacity appears to be roughly around 4,000 - 5,000 tribbles based on where the population tends to stabilize.
+```
+### Q: What are some biological, ecological, or stoichastic explanations that could explain the observed trend?
+
+```{=plaintext}
+This trend could be explained by limited resources, crowding, disease, waste buildup, or random environmental fluctuations affecting survival and reproduction.
+```
+### Q: What might be some expected consequences of this trend for the tribble population for the people living on the ship?
+
+```{=plaintext}
+The population will likely remain high and variable, causing ongoing issues with overcrowding, resource use, and population management for the ship’s crew.
 ```
 
-#### 8) Similarly, calculate the standard deviation of hindfoot lengths by species in the new column `sd_hindfoot`.
+------------------------------------------------------------------------
 
-```{r}
-df <- df %>%
-  group_by(genus_species) %>%
-  mutate(sd_hindfoot = sd(hindfoot_length, na.rm = TRUE)) %>%
-  ungroup()
+#### Opinion: what was the most useful and least useful aspect of this lab assignment? Why is that the case for you?
 
-df %>%
-  select(genus_species, hindfoot_length, sd_hindfoot) %>%
-  head(10)
+```{=plaintext}
+The most useful part of this lab was modeling population growth with exponential and logistic equations because it helped connect real data to theoretical models. The least useful part was repeatedly plotting similar graphs, since those steps were somewhat redundant once the pattern was clear.
 ```
-
-Let's take the species *Dipodomys merriami* (Rodentia: Heteromyidae) because it has the highest n in our current data frame.
-
-#### 9) Using `ggplot2` in a single pipe, plot a histogram of *D. merriami* hindfoot lengths with labels.
-
-```{r}
-
-df %>%
-  filter(genus_species == "Dipodomys_merriami") %>%
-  ggplot(aes(x = hindfoot_length)) +
-  geom_histogram(bins = 30) +
-  labs(
-    title = "Histogram of Dipodomys merriami Hindfoot Lengths",
-    x = "Hindfoot length (mm)",
-    y = "Count"
-  )
-
-
-
-
-```
-
-# Probability Distributions and Randomization
-
-Base R has a variety of probability distributions available. Many of them are available in four functions for each distribution by default: random, density, probability, and quantile.
-
-For example, for the normal distribution, the `rnorm()`, `dnorm()`, `pnorm()`, and `qnorm()` functions are available following the `?Normal` help file
-
-\
-![](images/image-801535382.png){width="500"}
-
-::: callout-caution
-## Normal Distribution Defaults
-
-Note that by default in R, normal distribution means are set to 0 and standard deviations are set to 1. These values can be changed to fit your needs.
-:::
-
-## `rnorm()`
-
-Let's draw 300,000 random numbers from a normal distribution.
-
-```{r}
-
-# Randomly draw a number from a normal distribution 300,000 times
-normal_distribution <- rnorm(300000)
-
-normal_distribution_df <- data.frame(value = normal_distribution) # Convert vector to dataframe
-normal_distribution_df$index <- seq_along(normal_distribution_df$value) # Add a numbered column
-
-# Calculate mean and standard deviation
-mean <- mean(normal_distribution_df$value)
-sd <- sd(normal_distribution_df$value)
-
-
-```
-
-#### 10) Inspect the data using `summary()` and describe it
-
-```{r}
-summary(normal_distribution_df)
-```
-
-```         
-```
-
-#### 11) Now plot the dataset using a `geom_point()` scatter plot
-
-```{r}
-ggplot(normal_distribution_df, aes(x = index, y = value)) +
-  geom_point() +
-  labs(
-    title = "Scatter plot of random draws from a normal distribution",
-    x = "Index",
-    y = "Value"
-  )
-
-```
-
-#### 12) What are your initial impressions of the shape and distribution of this dataset?
-
-```         
-From the scatter plot, the values appear randomly distributed with no visible trend over the index. Most points cluster around zero, with fewer extreme values as you move away from the center, suggesting a roughly symmetric distribution.
-```
-
-Plot this distribution as a histogram
-
-::: callout-tip
-***Hint**:* You will need to include this line in your `ggplot` pipe:\*
-
-`geom_histogram(bins = 1000) + # This is the number of rectangular bars in our histogram`
-:::
-
-```{r}
-
-ggplot(normal_distribution_df, aes(x = value)) +
-  geom_histogram(bins = 1000) +
-  labs(
-    title = "Histogram of random draws from a normal distribution",
-    x = "Value",
-    y = "Count"
-  )
-```
-
-#### 13) What are your impressions of the shape and distribution of this dataset now that it is presented as a histogram? If your impression has changed, how is that possible?
-
-```         
-The histogram shows a clear, symmetric, bell-shaped distribution centered around zero. This view makes the overall shape of the data easier to see than the scatter plot, which is why the impression becomes clearer when the data are presented as a histogram.
-```
-
-## `dnorm()`
-
-What is the probability that a value randomly drawn from this dataset is equal to 2? We can estimate this with the `dorm()` function:
-
-```{r}
-
-dnorm(2, mean = mean, sd = sd)
-
-```
-
-</details>
-
-#### 13b) Gut check: look at the plot, does this number make sense? Why or why not?
-
-```         
-Yes, the value makes sense. The histogram shows that values near 2 occur in the tails of the distribution and are less common than values near the mean, but they are not extremely rare. The density value reflects this lower but reasonable likelihood.
-```
-
-Now let's return to our `df` dataset
-
-### 14) Look back at the histogram you produced earlier for *D. merriami* hindfoot length, **visually** what do you think would be a decent estimate of the mean? What about the mode?
-
-*Hint: you can use what we just learned about bin sizes to "zoom" into the data*
-
-```         
-Based on the histogram, a reasonable visual estimate of the mean hindfoot length for Dipodomys merriami is around 36 mm. The mode also appears to be close to 36 mm, as this is where the highest bar in the histogram occurs.
-```
-
-#### 15a) Calculate the probability that a value randomly drawn from our *D. merriami* hindfoot length is equal to your visual estimate of the **mean**.
-
-::: callout-tip
-## *Tip: Don't forget to include the mean and standard deviation calculated earlier in `dnorm()`.*
-:::
-
-```{r}
-
-# Extract mean and sd for hindfoot length
-mean <- df %>%
-  filter(genus_species == "Dipodomys_merriami") %>%
-  summarize(mean_hindfoot = mean(mean_hindfoot)) %>% # Reduce to a single value
-  pull(mean_hindfoot) # Extract as a vector
-
-sd <- df %>%
-  filter(genus_species == "Dipodomys_merriami") %>%
-  summarize(sd_hindfoot = mean(sd_hindfoot)) %>% # Reduce to a single value
-  pull(sd_hindfoot) # Extract as a vector
-
-```
-
-```{r}
-dnorm(36, mean = mean, sd = sd)
-```
-
-#### 15b) From these results do your visual estimates seem accurate? Why or why not do you think that is?
-
-```         
-This value is extremely small because the probability of drawing any exact value from a continuous distribution is effectively zero, even at the mean.
-```
-
-#### 16a) Calculate the probability that a value randomly drawn from our *D. merriami* hindfoot length is equal to your visual estimate of the **mode**.
-
-```{r}
-dnorm(36, mean = mean, sd = sd)
-```
-
-#### 16b) From these results do your visual estimates seem accurate? Why or why not do you think that is?
-
-```         
-Yes, this result makes sense. Even though the mode represents the most common value visually, the probability of drawing any exact value from a continuous distribution is effectively zero. The histogram shows that values near the mode are common, not that the exact value itself has a high probability.
-```
-
-#### 17) Opinion: what was the most useful and least useful aspect of this lab assignment? Why is that the case for you?
-
-```         
-The most useful aspect of this lab was learning how to use group_by() and ungroup() correctly, as it clarified how grouped operations affect downstream calculations. The least useful aspect was calculating the probability of exact values in continuous distributions, since those probabilities are always extremely small and less informative than looking at ranges of values.
-```
-
 # References
 
-#### 18) What outside sources did you use to help you complete this work (including books, forums, LLMs, etc.)? Describe how they were used:
+#### What outside sources did you use to help you complete this work (including books, forums, LLMs, etc.)? Describe how they were used:
 
-```         
-This is exactly like what I did for Matt Dean's Field Mammology Course. In addition, if I encountered any roadblocks/did understand the message I was recieving I did honestly use ChatGPT to explain the meaning behind the message. 
+```{=plaintext}
+I used the Zoom provided by Charles, when I got stuck somewhere I sought out videos on Youtube, if the videos did not help I asked ChatGPT what certain things meant. 
 ```
