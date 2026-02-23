@@ -10,7 +10,7 @@ library(ggplot2)
 library(tidyr)
 
 # Read in the CSV from Desktop (Mac path)
-raw_data <- read_csv("~/Desktop/Blasius_et_al_2019.csv")
+raw_data <- read_csv("../data/Blasius_et_al_2019.csv")
 
 # Quick check
 head(raw_data)
@@ -219,7 +219,7 @@ h = 0.001\\
 K = 1000\\
 $$
 ```{r}
-install.packages("deSolve")
+# install.packages("deSolve")
 ```
 ```{r}
 
