@@ -294,3 +294,7 @@ list.files(all.files = TRUE)
 file.edit(".gitignore")
 ```
 
+```{=plaintext}
+meow
+```
+
