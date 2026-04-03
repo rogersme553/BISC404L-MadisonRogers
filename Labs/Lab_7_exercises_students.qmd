@@ -1,0 +1,296 @@
+### 0) Set-up your environmentgitcreds::gitcreds_set()
+
+```{r}
+install.packages("mcomsimr")
+```
+
+```{r}
+# install.packages(c("readxl", "tidyverse", "deSolve", "mcomsimr"))
+
+library(readxl)
+library(tidyverse)
+library(deSolve)
+library(mcomsimr)
+```
+
+
+```{r setup, include=FALSE}
+
+
+
+
+```
+
+# Island Biogeography Theory and boundary water's butterfly data
+
+![](../images/clipboard-1944280288.png){fig-align="center"}
+
+### 1) Load the data from the "butterfly_abundance_data" tab of the "ecog12731-sup-0001-appendixs1.xlsx" spreadsheet. This data is from a [study](@macdonald2021distinguishing) of butterfly abundance across the boundary waters between the US and Canada. *I recommend using the function `read_excel()` from the `readxl` package. Use its help file to help you utilize it.*
+
+```{r}
+
+
+```
+
+#### Inspect the dataset.
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+#### Q: What does the dataset look like? Describe the dataset. (*Hint: It may be useful to look up the original article to help understand the dataset*). What needs to be cleaned?
+
+```{=plaintext}
+```
+#### Clean the dataset:
+
+```{r}
+
+
+
+
+
+```
+
+### Manipulate data using `dplyr` and create *three* different scatter plots using `ggplot2` to explore if different aspects of the Island Biogeography Theory seem to be supported by this dataset.
+
+1)  Richness
+    -   *Hint this may help to calculate richness `mutate(<new column name> = rowSums(select(., <desired column range>)))`*
+2)  Island area
+3)  Island isolation
+    -   *Hint, this may help: `pivot_longer(cols = starts_with("isolation_"), names_to = "isolation_measure", values_to = "isolation_value")`. Also this may be another good place to use `facet_wrap()`.*
+
+### How would we expect these 3 values to inter-relate to one another?
+
+```{=plaintext}
+```
+### Now create at least 3 plots, comment on what each plot looks like it is implying, and note if it is in-line with the overlying theory.
+
+### *Hint: adding `geom_smooth(method = "lm", se = FALSE)` to your scatterplots will help you quickly explore trends for each of these. Remember that in the real-world, this should just be a starting point to selecting a model.*
+
+```{r}
+
+
+
+```
+
+```{=plaintext}
+```
+```{r}
+
+# Reshape the dataset to long format to include isolation measures
+
+```
+
+```{r}
+
+
+
+```
+
+```{=plaintext}
+```
+```{r}
+
+
+
+```
+
+```{=plaintext}
+```
+### Butterflies are very mobile, are they necessarily residents of these islands? If not, is the raw species richness you calculated correct? Manipulate the data to account for only resident butterflies and generate your plots again
+
+```{r}
+
+
+# Isolate butterfly and hostplant
+butterfly_cols <- names(butterfly_df_clean)[26:59]
+host_cols      <- names(butterfly_df_clean)[60:92]
+
+# Clean up host plant column names to match butterfly names
+host_base_names <- gsub("_hostplants", "", host_cols)
+
+# Find matching columns
+matching_species <- intersect(butterfly_cols, host_base_names)
+
+# Get the actual column names for butterflies and host plants
+butterfly_match_cols <- matching_species
+host_match_cols <- paste0(matching_species, "_hostplants")
+
+# Subset the relevant columns from the dataset
+butterflies <- butterfly_df_clean %>%
+  select(all_of(butterfly_match_cols))
+
+hostplants <- butterfly_df_clean %>%
+  select(all_of(host_match_cols))
+
+# Multiply butterfly presence * host plant presence (because for hostplants if present it is a 1, if absent it is a 0)
+resident_matrix <- butterflies * hostplants
+
+# Figure out richness for "resident" species matches and add back into the dataframe
+butterfly_df_clean <- butterfly_df_clean %>%
+  mutate(resident_species_richness = rowSums(resident_matrix, na.rm = TRUE))
+
+
+
+```
+
+#### Now plot again after these changes have been made
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+
+```
+
+```{r}
+
+
+
+
+```
+
+#### Did the trends change?
+
+```{=plaintext}
+```
+# Levin's Metapopulation Model equations:
+
+#### We can rearrange the Levin's metapopulation model to another common representation:
+
+$$
+\frac{dP}{dt} \ =\ ( c\ -\ m) \ P\ \left( \ 1\ -\ \frac{P}{1\ -\ \frac{m}{c}}\right)
+$$
+
+### Now model this function in R and plot it until a time of 100 with the following parameters:
+
+$$
+c = 0.15\\
+m = 0.06\\
+P0 = 0.01\\
+$$
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+### Q: Describe the plot. How is this plot similar or different from the plot we made during lab for the following equation? Why is is that the case?
+
+$$
+\frac{dP}{dt} \ =\ cP\ ( 1\ -\ P) \ -\ mP
+$$
+
+```{=plaintext}
+```
+# Metapopulation Dynamics
+
+### Like we did in lab, use the `mcomsimr` to simulate two of the three remaining metapopulation perspectives. Describe your results.
+
+#### Name the perspective you will be simulating:
+
+```{=plaintext}
+```
+#### What are the settings you are choosing and why?
+
+```{=plaintext}
+```
+#### Run your simulation
+
+```{r}
+
+
+```
+
+### Describe what your plots are showing based on the results:
+
+```{=plaintext}
+landscape: 
+```
+```{=plaintext}
+disp_mat:
+```
+```{=plaintext}
+dynamics.df:
+```
+```{=plaintext}
+env.df:
+```
+```{=plaintext}
+time series plots:
+```
+#### Name the perspective you will be simulating:
+
+```{=plaintext}
+```
+#### What are the settings you are choosing and why?
+
+```{=plaintext}
+```
+#### Run your simulation
+
+```{r}
+
+
+```
+
+### Describe what your plots are showing based on the results:
+
+```{=plaintext}
+landscape: 
+```
+```{=plaintext}
+disp_mat:
+```
+```{=plaintext}
+dynamics.df:
+```
+```{=plaintext}
+env.df:
+```
+```{=plaintext}
+time series plots:
+```
+
+```{r}
+list.files(all.files = TRUE)
+```
+
+```{r}
+file.edit(".gitignore")
+```
+
