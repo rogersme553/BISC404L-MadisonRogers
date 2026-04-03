@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # History files
 .Rhistory
 .Rapp.history
@@ -48,3 +49,9 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+=======
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+>>>>>>> 6c78598 (Update project files)
