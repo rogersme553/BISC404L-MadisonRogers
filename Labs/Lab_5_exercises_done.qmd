@@ -1,0 +1,501 @@
+# Working with real interspecific data
+
+For this assignment, you will search online to find and analyze a dataset other than the one used in lab to see if competition appears to be occurring between 2 species. Try using resources like Dryad, Google Dataset Search, Zenodo among others to find a dataset.
+
+## **Finding a Dataset Tips**
+
+To find a dataset that will work it ideally matches these 3 criteria:
+
+-   At least 2 different species
+
+-   Population counts for each species or each row representing a single individual
+
+-   Population counts at different time points (at least 8 time points)
+
+If you are able to find a good dataset you want to use but there is not a column for population counts, but each *row* is an *individual* (like in a dataset of mice species, each row is an individual mouse), you can still use that dataset by creating a population count column like this:
+
+```{=plaintext}
+
+df_count <- df %>% 
+    group_by(species, time) %>% 
+    summarize(count = n(), .groups = "drop") %>% # Using summarize() instead of mutate() to make grouping permanent 
+    ungroup()
+```
+If your dataset doesn't give total population at a given time, but instead gives additional individuals observed at each time point, you can use the following to calculate cumulative count:
+
+```{=plaintext}
+
+df_count_cumulative <- df_count %>%
+    arrange(species, time) %>% 
+    mutate(cumulative_count = cumsum(count))
+```
+## Exercise 0: Set-up and load data
+
+```{r setup, include=FALSE}
+library(readr)
+
+
+```
+
+```{r}
+df <- read_csv("~/Desktop/BYLOT-community_composition.csv")
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+colnames(df)
+```
+
+```{r}
+library(tidyr)
+library(dplyr)
+```
+
+```{r}
+df_long <- df %>%
+  pivot_longer(
+    cols = -species_en,
+    names_to = "time",
+    values_to = "count"
+  )
+```
+
+```{r}
+head(df_long)
+```
+
+```{r}
+df_clean <- df_long %>%
+  filter(!is.na(count))
+```
+
+```{r}
+head(df_clean)
+```
+
+```{r}
+df_clean <- df_clean %>%
+  mutate(time = as.numeric(time))
+```
+
+```{r}
+head(df_clean)
+```
+
+```{r}
+species_summary <- df_clean %>%
+  group_by(species_en) %>%
+  summarize(
+    total = sum(count),
+    n_years = n()
+  ) %>%
+  arrange(desc(total))
+
+species_summary
+```
+
+```{r}
+df_2species <- df_clean %>%
+  filter(species_en %in% c(
+    "Nearctic brown lemming",
+    "Nearctic collared lemming"
+  ))
+```
+
+## 1: Describe your dataset and how it was collected
+
+```{=plaintext}
+```
+## 2: Explore your dataset and describe what you see
+
+```{=plaintext}
+Done above- I worked with the dataset prior to beginning the assignment to ensure it was good enough. I saw the datapoint of multiple species. Many had numbers, but many had N/A. There are enough numerical values for me to clean and work with. 
+```
+## 3: Clean your data using dplyr
+
+```{=plaintext}
+Also done above, part of my seeing if this set was good enough for this project. I removed all of the N/A and recieved a summary of all the numerical values from the cleaned data. I determined Nearctic brown lemming and Nearctic collared lemming were the best to compare because they had the same amount of data point (27)
+```
+## 4: Plot your data for initial analysis/description of your dataset. What trends do you see?
+
+```{r}
+library(ggplot2)
+
+ggplot(df_2species, aes(x = time, y = count, color = species_en)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Population Dynamics of Two Lemming Species Over Time",
+    x = "Year",
+    y = "Population Count",
+    color = "Species"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{=plaintext}
+From this plot I can see that the species of Nearcity collar/brown lemmings have population changes over time- where there are apparent increases and decreases. At certain points, one species will increase while the other decreases. This population model is indicative of possible competition for shared resources. Conversly, there are also moments where the increase/decrease of the species is parallel; this could be due to environmental factors impacting both populations. Overall, the trends suggest a mix of species interaction and environmental impact. 
+```
+## 5: Define the Lotka-Voltera interspecific competition model function
+
+```{r}
+
+library(deSolve)
+
+lotka_volterra_comp <- function(t, state, parameters) {
+  
+  with(as.list(c(state, parameters)), {
+    
+    dN1 <- r1 * N1 * (1 - (N1 + a12 * N2) / K1)
+    dN2 <- r2 * N2 * (1 - (N2 + a21 * N1) / K2)
+    
+    list(c(dN1, dN2))
+  })
+}
+
+```
+
+## 6: Extract the argument values from your dataset necessary as inputs into the Lotka-Voltera interspecific competition model
+
+```{r}
+head(sp1)
+head(sp2)
+```
+
+```{r}
+str(df_2species)
+```
+
+```{r}
+colnames(df_2species)
+```
+
+```{r}
+df_2species <- df_clean %>%
+  filter(species_en %in% c(
+    "Nearctic brown lemming",
+    "Nearctic collared lemming"
+  )) %>%
+  select(species_en, time, count)
+```
+
+```{r}
+sp1 <- df_2species %>%
+  filter(species_en == "Nearctic brown lemming") %>%
+  arrange(time)
+
+sp2 <- df_2species %>%
+  filter(species_en == "Nearctic collared lemming") %>%
+  arrange(time)
+```
+
+```{r}
+head(sp1)
+head(sp2)
+```
+
+```{r}
+# Times
+times <- sort(unique(df_2species$time))
+
+# Initial populations
+N01 <- sp1$count[1]
+N02 <- sp2$count[1]
+
+# Growth rates
+r1 <- (sp1$count[2] - sp1$count[1]) / sp1$count[1]
+r2 <- (sp2$count[2] - sp2$count[1]) / sp2$count[1]
+
+# Carrying capacities
+a11 <- max(sp1$count, na.rm = TRUE)
+a22 <- max(sp2$count, na.rm = TRUE)
+
+# Competition coefficients
+a21 <- 0.5
+a12 <- 0.5
+
+times
+N01
+N02
+r1
+r2
+a11
+a22
+a21
+a12
+```
+
+```{r}
+head(sp1)
+head(sp2)
+```
+
+```{r}
+r1 <- log(sp1$count[2] / sp1$count[1])
+r2 <- log(sp2$count[2] / sp2$count[1])
+
+r1
+r2
+```
+
+```{r}
+sp1 <- df_2species %>%
+  filter(species_en == "Nearctic brown lemming") %>%
+  arrange(time)
+
+sp2 <- df_2species %>%
+  filter(species_en == "Nearctic collared lemming") %>%
+  arrange(time)
+```
+
+```{r}
+
+# Times
+times <- sort(unique(df_2species$time))
+times
+
+
+```
+
+```{r}
+
+# N01, N02
+N01 <- sp1$count[1]
+N02 <- sp2$count[1]
+
+N01
+N02
+
+
+```
+
+```{r}
+
+# r1, r2
+r1 <- (sp1$count[2] - sp1$count[1]) / sp1$count[1]
+r2 <- (sp2$count[2] - sp2$count[1]) / sp2$count[1]
+
+r1
+r2
+
+
+```
+
+```{r}
+
+# a11, a22
+a11 <- max(sp1$count, na.rm = TRUE)
+a22 <- max(sp2$count, na.rm = TRUE)
+
+a11
+a22
+
+```
+
+```{r}
+
+# a21, a12
+a21 <- 0.5
+a12 <- 0.5
+
+```
+
+## 7: Run your model and plot using `ggplot2`
+
+```{r}
+
+# Run with both species present
+
+# Set parameters
+parameters <- c(
+  r1 = r1,
+  r2 = r2,
+  K1 = a11,
+  K2 = a22,
+  a12 = a12,
+  a21 = a21
+)
+
+# Set N0
+N0 <- c(
+  N1 = N01,
+  N2 = N02
+)
+
+# Run the ODE model
+out_both <- ode(
+  y = N0,
+  times = times,
+  func = lotka_volterra_comp,
+  parms = parameters
+)
+
+# Convert to dataframe for plotting
+out_both_df <- as.data.frame(out_both)
+
+library(tidyr)
+library(ggplot2)
+
+out_both_long <- out_both_df %>%
+  pivot_longer(
+    cols = c(N1, N2),
+    names_to = "species",
+    values_to = "count"
+  )
+
+# Plot the results
+ggplot(out_both_long, aes(x = time, y = count, color = species)) +
+  geom_line() +
+  labs(
+    title = "Lotka-Volterra Model: Both Species Present",
+    x = "Year",
+    y = "Population Size"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{r}
+
+# Run with one species absent
+
+# Set N0
+N0_absent1 <- c(
+  N1 = N01,
+  N2 = 0
+)
+
+# Run the ODE model
+out_absent1 <- ode(
+  y = N0_absent1,
+  times = times,
+  func = lotka_volterra_comp,
+  parms = parameters
+)
+
+# Convert to dataframe for plotting
+out_absent1_df <- as.data.frame(out_absent1)
+
+out_absent1_long <- out_absent1_df %>%
+  pivot_longer(
+    cols = c(N1, N2),
+    names_to = "species",
+    values_to = "count"
+  )
+
+# Plot the results
+ggplot(out_absent1_long, aes(x = time, y = count, color = species)) +
+  geom_line() +
+  labs(
+    title = "Lotka-Volterra Model: Collared Lemming Absent",
+    x = "Year",
+    y = "Population Size"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# Run with the other species absent
+
+# Set parameters
+parameters <- c(
+  r1 = r1,
+  r2 = r2,
+  K1 = a11,
+  K2 = a22,
+  a12 = a12,
+  a21 = a21
+)
+
+# Set N0
+N0_absent2 <- c(
+  N1 = 0,
+  N2 = N02
+)
+
+# Run the ODE model
+out_absent2 <- ode(
+  y = N0_absent2,
+  times = times,
+  func = lotka_volterra_comp,
+  parms = parameters
+)
+
+# Convert to dataframe for plotting
+out_absent2_df <- as.data.frame(out_absent2)
+
+out_absent2_long <- out_absent2_df %>%
+  pivot_longer(
+    cols = c(N1, N2),
+    names_to = "species",
+    values_to = "count"
+  )
+
+# Plot the results
+ggplot(out_absent2_long, aes(x = time, y = count, color = species)) +
+  geom_line() +
+  labs(
+    title = "Lotka-Volterra Model: Brown Lemming Absent",
+    x = "Year",
+    y = "Population Size"
+  ) +
+  theme_minimal()
+```
+
+## 8: Interpret your results, what do you observe?
+
+```{=plaintext}
+The results illustrate when both species are present. The 'Brown' lemming population increases rapidly at a high population size, whereas the 'Collard" population declines under defined conditions. 
+
+When there is a lack of 'collard', the 'brown' lemming population grows rapidly- reaching carrying capacity, indicating a lack of limitation by the presence of the other species. Similarly, when 'brown' lemming is absent, the 'collard' lemming population inceases and stabilizes at its specifc carrying capacity. 
+
+Overall, this suggests the both species can grown independly, but when in the same area, competitve interaction lead to the exclusion of the collard lemming. This outcome is consistent with competitive exclusion, where one species dominates due to more effective use of shared resources.
+```
+## 9: Bonus, plot a zero growth isocline analysis on your dataset:
+
+```{r}
+# Create values for N1
+N1_vals <- seq(0, a11, length.out = 100)
+
+# Isoclines
+iso1 <- a11 - a12 * N1_vals        # species 1
+iso2 <- (a22 - a21 * N1_vals)     # species 2
+
+iso_df <- data.frame(
+  N1 = N1_vals,
+  N2_species1 = iso1,
+  N2_species2 = iso2
+)
+
+library(ggplot2)
+
+ggplot() +
+  geom_line(data = iso_df, aes(x = N1, y = N2_species1), linetype = "solid") +
+  geom_line(data = iso_df, aes(x = N1, y = N2_species2), linetype = "dashed") +
+  labs(
+    title = "Zero Growth Isoclines",
+    x = "N1 (Brown Lemming)",
+    y = "N2 (Collared Lemming)"
+  ) +
+  theme_minimal()
+
+```
+
+### What do you observe? Is it in agreement with your previous analysis?
+
+```{=plaintext}
+This graph provides further insight and is in agreement with the previous analysis- which showed the brown lemming outcompeting the collard. This is cofirmed in the graph above, ads the brown lemming is a stronger competitor as its line is above the collard's. 
+```
+
+------------------------------------------------------------------------
+
+# References
+
+Dryad Digital Repository. High Arctic Vertebrate Abundance Time Series. Available at: https://datadryad.org/ ChatGPT for any error messages I didn't understand.
