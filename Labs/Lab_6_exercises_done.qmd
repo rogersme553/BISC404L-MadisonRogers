@@ -1,0 +1,248 @@
+# Diversity Indices
+
+Your goal for this assignment is to find a dataset online that includes species abundances across different plots, sites, or regions. You will conduct diversity analyses on the dataset to compare diversity among these areas.
+
+::: callout-note
+## Tips
+
+Your dataset should include different plots/sites/etc. (at least 3), different species (at least 10), and abundance data (either a column for abundance or where each row represents an individual).
+
+If you are able to find a good dataset you want to use but there is not a column for abundance counts, but each *row* is an *individual* (like in a dataset of mice species, each row is an individual mouse e.g. row 1 is Mickey and row 2 in Minnie, etc.), you can still use that dataset by creating a population count column like this:
+
+``` r
+df_count <- df %>% 
+    group_by(species, time) %>% 
+    summarize(count = n(), .groups = "drop") %>%
+    ungroup()
+```
+
+If your dataset has separate columns for each plot/habitat/region/etc. you will have to use pivot_longer() before you pivot_wider() while creating your community data matrix, like this:
+
+``` r
+pivot_longer(cols = <first site column name: last site column name>, names_to = "Sites", values_to = "Abundance", values_drop_na = TRUE)
+```
+
+If your dataset has an abundance column but also has repeated rows for some species/sites (if values are erroneously repeated, if if your dataset is over time, etc.), you can use the following to collapse your dataset:
+
+``` r
+  df_out <- df_in %>%
+    group_by(<species column>, <site column>) %>%
+    summarize(cumulative_abundance = sum(<abundance column>, .groups = "drop") %>%
+    ungroup()
+```
+:::
+
+### 1) Set-up your environment. Then load and explore your dataset. Describe what you see. Note what needs to be cleaned. Plot your data for initial analysis/description of your dataset. This could include histograms of species abundances or maps of the locations of plots. What trends do you see? Describe your dataset and how it was collected.
+
+```{r setup, include=FALSE}
+df <- read_excel("~/Desktop/Ground beetles.xls")
+
+```
+
+```{r}
+# Load libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+
+# Load dataset
+df <- read_excel("~/Desktop/Ground beetles.xls")
+
+# Explore data
+head(df)
+str(df)
+summary(df)
+
+```
+
+```{r}
+# Histogram of abundances
+ggplot(df, aes(x = Quantity)) +
+  geom_histogram(binwidth = 20) +
+  labs(title = "Distribution of Species Abundances",
+       x = "Abundance",
+       y = "Frequency")
+```
+
+```{r}
+# Total abundance per site
+df %>%
+  group_by(Sample) %>%
+  summarize(total_abundance = sum(Quantity)) %>%
+  ggplot(aes(x = Sample, y = total_abundance)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Total Abundance per Site",
+       x = "Site",
+       y = "Total Abundance")
+```
+
+```{=plain}
+This dataset contains various species of ground beetles and the abundances across multiple sampling site (eg. G4), and it includes more than ten species throughout multiple locations, thus making is good for diversity analysis.
+There are significant variation in abuandance, with some dominant species as well as many rare ones. This results in a right-skewed distribution. Total abundance also varies across site, indicating differences in the composition in composition. 
+The dataset requires cleaning because some species appear multiple times within the same site, so abundances must be aggregated by species and site. The data were likely collected using pitfall traps, a common method for sampling ground beetles in ecological studies.
+```
+### 2) Clean and wrangle your data, describing why you are conducting the cleaning steps you are taking.
+
+*Hint: it will be helpful to have 3 objects: your clean dataset in long format, your clean data in wide format, and your clean dataset set-up as a community data matrix*
+
+```{r}
+library(dplyr)
+library(tidyr)
+
+# 1. Clean data (LONG format)
+df_clean <- df %>%
+  group_by(Species, Sample) %>%
+  summarize(Abundance = sum(Quantity), .groups = "drop")
+```
+
+```{r}
+# 2. Convert to WIDE format
+df_wide <- df_clean %>%
+  pivot_wider(names_from = Species,
+              values_from = Abundance,
+              values_fill = 0)
+```
+
+```{=plain}
+```
+```{r}
+# 3. Create community data matrix
+library(vegan)
+
+comm_matrix <- as.data.frame(df_wide)
+rownames(comm_matrix) <- comm_matrix$Sample
+comm_matrix$Sample <- NULL
+```
+
+```{=plain}
+```
+```{r}
+df_clean
+head(df_clean)
+```
+
+```{r}
+df_wide
+head(df_wide)
+```
+
+```{r}
+comm_matrix
+head(comm_matrix)
+```
+
+```{r}
+glimpse(df_clean)
+glimpse(df_wide)
+glimpse(comm_matrix)
+```
+
+```{=plain}
+The data was cleaned via grouping observations by species and sample and summing the abundances so that each species had one total abundance value/site. This produced a clean long-format dataset with species, sample, and abundance columns. Then, I converted the data to a wideformat where rows represented the sampling site, and each column is a species (missing values = 0). Finally, the site column was removed and used as row names to create a community data matrix, which is required for calculating diversity indices and distance measures.
+```
+### 3) Calculate and compare diversity metrics among at least 3 plots/sites/areas/etc. (*Hint: there were 3 different diversity metrics in lab, with the 3rd having two options for its calculation*). What do you observe? Does this align with what you expect from your plots/data above?
+
+```{r}
+library(vegan)
+
+# Species richness
+richness <- specnumber(comm_matrix)
+
+# Shannon diversity
+shannon <- diversity(comm_matrix, index = "shannon")
+
+# Simpson diversity
+simpson <- diversity(comm_matrix, index = "simpson")
+
+# Combine into one table
+div_metrics <- data.frame(
+  Site = rownames(comm_matrix),
+  Richness = richness,
+  Shannon = shannon,
+  Simpson = simpson
+)
+
+div_metrics
+```
+
+```{=plain}
+Diversity varied across sites, (richness range = 10-28). Sites such as G4 and G6 had the highest Shannon and Simpson values, indicating more even and diverse communities, while sites like E1 and W6 showed lower diversity due to species dominance. G sites were generally more diverse than E and W sites. These patterns align with earlier observations of uneven species abundances across sites.
+```
+### 4) Calculate and compare Euclidean, Bray-Curtis, and Jaccard distances for your data (all species and all plots). Create an NMDS plot with all data for both Bray-Curtis and Jaccard distances for your data. What do you observe?
+
+```{r}
+library(vegan)
+
+# 1. Distance matrices
+
+# Euclidean
+dist_euclidean <- dist(comm_matrix, method = "euclidean")
+
+# Bray-Curtis
+dist_bray <- vegdist(comm_matrix, method = "bray")
+
+# Jaccard (presence/absence)
+dist_jaccard <- vegdist(comm_matrix, method = "jaccard", binary = TRUE)
+```
+
+```{r}
+# 2. NMDS (Bray-Curtis)
+nmds_bray <- metaMDS(comm_matrix, distance = "bray", k = 2)
+
+plot(nmds_bray, main = "NMDS - Bray-Curtis")
+```
+
+```{r}
+# 3. NMDS (Jaccard)
+nmds_jaccard <- metaMDS(comm_matrix, distance = "jaccard", binary = TRUE, k = 2)
+
+plot(nmds_jaccard, main = "NMDS - Jaccard")
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{=plain}
+The NMDS plots show clustering of sites based on the similarity of community. There is clearer separation found in the Bray-Curtis, showing that abundance differences drives community structure. Jaccard shows more overlap due to its narrow consideration of only presence-absence. Some sites cluster closer, suggesting the communities are similar, while others are distinct. These results align with earlier diversity patterns.
+```
+### 5) Calculate Gini-Simpson Index, Simpson's Evenness, and Shannon Index values for your data. What do you observe?
+
+```{r}
+library(vegan)
+
+# Shannon Index
+shannon <- diversity(comm_matrix, index = "shannon")
+
+# Simpson Index (this is already Gini-Simpson)
+gini_simpson <- diversity(comm_matrix, index = "simpson")
+
+# Species richness (needed for evenness)
+richness <- specnumber(comm_matrix)
+
+# Simpson's Evenness
+simpson_evenness <- gini_simpson / richness
+
+# Combine
+div_results <- data.frame(
+  Site = rownames(comm_matrix),
+  Shannon = shannon,
+  Gini_Simpson = gini_simpson,
+  Simpson_Evenness = simpson_evenness
+)
+
+div_results
+```
+
+```{=plain}
+Shannona nd Gini-Simpson indices were highest at G site (like G4), this shows greater diversity. On the otherhand, E site (like E1), were the lowest. Simpson’s evenness was low across all sites, showing that communities are dominated by a few species. These results support earlier findings that G sites are more diverse, while E sites have stronger dominance.
+```
+### 6) What overall hypotheses or conclusions can you draw from your analysis of this dataset? Based on the flowchart from lab, which metric(s) do you think are most applicable for your dataset?
+
+```{=plain}
+The analysis determined that G sites were typically more diverse than those of E/W sites. This could be due to environmental differences impacting composisiton of specie. Communities are uneven, with a few dominant species across sites. Considering the flowchart, the most appropriate methds would be Bray-Curtis and the Shannon. This is because they account for species abundance and both richness and eveness. These metrics best capture the observed differences in the structure of the community. 
+```

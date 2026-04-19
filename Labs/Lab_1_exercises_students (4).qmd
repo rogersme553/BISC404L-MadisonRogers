@@ -1,0 +1,188 @@
+# Introduction to GitHub
+
+Before next lab session, you should have the following completed
+
+1.  R/Rstudio downloaded
+2.  Git/GitHub downloaded
+3.  GitHub shared with me
+4.  R/Rstudio and Git/GitHub integrated
+5.  GitHub repo organized
+
+In order to complete the task "GitHub repo organized" and begin understanding how to use Git, complete this worksheet before next lab.
+
+## Activity 1
+
+1.  Edit your `README.md` *on your computer* in Rstudio by deleting all the text in the file and then replacing it with `# BISC 404L: Ecology and Biodiversity`. Be sure to save these changes, if saved correctly the filename in Rstudio should change from red to black.
+2.  **Commit** your changes with a descriptive message. Do *not* push.
+
+Go to your repo on your *browser*, what do you observe?
+
+```{=plaintext}
+I do not see an updated README on the github menu as it is not pushed. Only local changes have been made. 
+```
+Paste a screenshot of what you see (*to paste in screenshots, be sure to be viewing the `.qmd` in "Visual" mode*)
+
+*Screenshot:*
+
+![](images/clipboard-4220139974.png)
+
+3.  On your computer, push your changes
+
+Go to your repo on your *browser*, what do you observe now?
+
+```{=plaintext}
+The README is now availible on github because the changes were no longer local. 
+```
+*Screenshot:*![](images/clipboard-866438796.png)
+
+4.  Edit your `README.md` online in the browser by adding your name surrounded by one asterisk (\*) on each side on the line underneath "BISC 404L..."
+5.  Commit your changes with a descriptive message
+
+Go to the folder on your computer containing your repo, what do you observe?
+
+```{=plaintext}
+```
+*Screenshot:*![](images/clipboard-390540108.png)
+
+6.  Pull your changes to your local device
+
+Go to the folder on your computer containing your repo, what do you observe now?
+
+```{=plaintext}
+The README file now includes the edits made on GitHub (name), showing that the local and remote versions are now aligned.
+```
+*Screenshot:*
+
+![](images/clipboard-1079118983.png)
+
+7.  On your computer, create a new file called `test1.txt`
+8.  Edit your `.gitignore` file to include the name `test1.txt` at the bottom of the `.gitignore` file. Save the `.gitignore` file.
+
+Now what happens when you try to commit and push your changes your changes? What do you see in your browser versus on your computer?
+
+```{=plaintext}
+Due to the gitignore, the test1.txt was not included/visible. 
+```
+*Screenshot:*![](images/clipboard-1747076187.png){width="1285"}
+
+9.  On your computer, delete `test1.txt` from your `.gitignore` file. Save your `.gitignore` file. Now what happens when you try to commit and push on your computer? What do you see in your browser versus on your computer?
+
+```{=plaintext}
+Removing the git ignore, allowed for the test1 to be visible in both local and on github. 
+```
+*Screenshot:*![](images/clipboard-1747076187.png)
+
+10. For question 7-9, what did you learn about how the `.gitignore` file works?
+
+```{=plaintext}
+When gitignore is present it stops it from being tracked/updated on the github repo. With it present, the file will not be visible under lists. Without it, the file functions normally. 
+```
+11. On your computer create a new, empty folder in your repo called "test_folder".
+
+What do you observe on your browser when you try to commit and push?
+
+```{=plaintext}
+Due to the folder being empty, it does not appear on github. Github doesn't track empty folders. 
+```
+*Screenshot:*![](images/clipboard-1747076187.png)
+
+12. Now add a file called `test2.txt` inside your folder "test_folder"
+
+Now what do you observe on your browser when you try to commit and push? Why did it change?
+
+```{=plaintext}
+Now the folder appears because there is a file in it. 
+```
+*Screenshot:*![](images/clipboard-1747076187.png)
+
+13. On your browser, edit the `test2.txt` by writing the word "green" in it
+
+14. Commit. Do *not* push.
+
+15. On your desktop, edit the `test2.txt` by writing the word "blue" in it
+
+16. Commit
+
+Now what do you observe when you try to push from your computer?
+
+```{=plaintext}
+It was rejected because there was an error stemming from a change in the remote repository that is not in the local. 
+```
+*Screenshot:*
+
+![](images/clipboard-1583992593.png)
+
+Why is that?
+
+```{=plaintext}
+This is due to a conflict in the file being edited in two separate locations, resulting in two different versions. Git prevents this push to avoid overwriting changes. 
+```
+17. On your computer, open "test2.txt" in Rstudio. You should see that the file has changed.
+
+What do you think these new symbols mean?
+
+```{=plaintext}
+this indicates a merging conflict between the different versions. This allows to compare them and then decide which version to keep. 
+```
+*Screenshot:*
+
+![](images/clipboard-1583992593.png)
+
+18. Delete all the text in the file except for "blue", save, commit, and push.
+
+Now what do you observe from your browser?
+
+```{=plaintext}
+There is not longer a conflict and blue is the only thing showing, confirming the conflict was resolved on the local level, allowing the final to be in the remote repository. 
+```
+*Screenshot:*
+
+19. Why do you think this happened?
+
+```{=plaintext}
+I physicallt removed/resulved the conflict within the merge by choosing the blue file. I was then able to update the remote repository with a commit and push, updating it with the final version. 
+```
+## Activity 2
+
+Take time to better organize the folder/file structure of your repo
+
+-   Remember, here is a template format you can use:
+
+    -   ![](../images/clipboard-3401715733.png){width="264"}
+
+    -   [Template Repository](https://github.com/CharlesLehnen/standard_repository_template)
+
+-   You can also follow a template like this for coursework:
+
+    -   ![](../images/clipboard-828242083.png){width="162"}
+
+-   Or you can make whatever folder structure makes sense to you, as long as it is intentional and logical
+
+::: callout-warning
+## GitHub Warnings!
+
+-   **Note:** GitHub does *not* like empty folders
+
+-   GitHub does not do well with large files. Best to add them to `.gitignore` and back them up separately (Google Drive, OneDrive, etc.)
+:::
+
+![](images/clipboard-1098968702.png)
+
+## Activity 3
+
+Underneath the course title and your name, on your computer add whatever descriptive text you would like to your `README.md` file. You could add a description of your folder structure, you could start a list talking about which topics we covered in which labs, you could start a documents folder and download the course syllabus to it, etc.
+
+For inspiration, you could look at [this README.](https://github.com/CharlesLehnen/standard_repository_template/blob/main/README.md)
+
+Add some style to your README following this guide:
+
+![](../images/clipboard-1482354080.png)\
+[*Source*](https://lukegearing.blot.im/using-markdown-and-pandoc-to-make-rpg-documents-for-free)
+
+*To add styles using this guide, be sure to be viewing this `.qmd` in "Source" mode. You can toggle to "Visual" mode to double check that style changes are being made as you intend.*
+
+![](../images/clipboard-561899689.png)
+
+Next lab session, I will identify some repos that I would like to showcase to the rest of the students, so think about your organization logically and creatively. There are no right or wrong ways to organize, just so it makes sense to you and you stay consistent!
+
+![](images/clipboard-735773966.png)
