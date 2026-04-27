@@ -1,0 +1,669 @@
+---
+title: "Final Project"
+author: "Madison Rogers"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+head(beaver)
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+# Load data
+beaver <- read.csv("beaver_site_height_data_2015_2019.csv")
+elk <- read.csv("corrected_elk_counts_09Jul2023_Park_only.csv")
+fall <- read.csv("fall_height_data_2001_2020.csv")
+wolf <- read.csv("wolf_1995_2022_population_ynp_nr_nnrr.csv")
+
+```
+
+```{r}
+library(readr)
+wolf <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv")
+```
+
+```{r}
+library(readr)
+
+wolf <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv")
+
+```
+
+```{r}
+list.files()
+```
+
+```{r}
+ls()
+```
+
+```{r}
+dim(beaver)
+dim(elk)
+dim(fall)
+dim(wolf)
+head(fall)
+```
+
+```{r}
+head(wolf)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(readr)
+
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv") |> clean_names()
+elk    <- read_csv("corrected_elk_counts_09Jul2023_Park_only.csv") |> clean_names()
+fall   <- read_csv("fall_height_data_2001_2020.csv") |> clean_names()
+wolf   <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv") |> clean_names()
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(readr)
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+
+elk <- read_csv("corrected_elk_counts_09Jul2023_Park_only.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+
+fall <- read_csv("fall_height_data_2001_2020.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+
+wolf <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+```
+
+```{r}
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-x1)
+
+View(beaver)
+```
+
+```{r}
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of("...1"))
+```
+
+```{r}
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv", show_col_types = FALSE) |> clean_names() |> select(-any_of("...1"))
+elk    <- read_csv("corrected_elk_counts_09Jul2023_Park_only.csv", show_col_types = FALSE) |> clean_names() |> select(-any_of("...1"))
+fall   <- read_csv("fall_height_data_2001_2020.csv", show_col_types = FALSE) |> clean_names() |> select(-any_of("...1"))
+wolf   <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv", show_col_types = FALSE) |> clean_names() |> select(-any_of("...1"))
+```
+
+```{r}
+names(beaver)
+```
+
+```{r}
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of("x1"))
+```
+
+```{r}
+names(beaver)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(readr)
+
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1")))
+
+elk <- read_csv("corrected_elk_counts_09Jul2023_Park_only.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1")))
+
+fall <- read_csv("fall_height_data_2001_2020.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1")))
+
+wolf <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1")))
+```
+
+```{r}
+names(beaver)
+names(elk)
+names(fall)
+names(wolf)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(readr)
+
+beaver <- read_csv("beaver_site_height_data_2015_2019.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1"))) |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+
+elk <- read_csv("corrected_elk_counts_09Jul2023_Park_only.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1"))) |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+
+fall <- read_csv("fall_height_data_2001_2020.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1"))) |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+
+wolf <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(-any_of(c("x1", "...1"))) |>
+  distinct() |>
+  mutate(across(where(is.character), str_trim))
+```
+
+```{r}
+wolf_long <- wolf |>
+  pivot_longer(
+    cols = starts_with("x"),
+    names_to = "year",
+    values_to = "wolf_population"
+  ) |>
+  mutate(year = as.numeric(str_remove(year, "^x")))
+```
+
+```{r}
+beaver_yearly <- beaver |>
+  group_by(year) |>
+  summarize(
+    beaver_mean_height = mean(height, na.rm = TRUE),
+    beaver_n = n(),
+    .groups = "drop"
+  )
+
+fall_yearly <- fall |>
+  group_by(year) |>
+  summarize(
+    fall_mean_height = mean(fall_height, na.rm = TRUE),
+    fall_n = n(),
+    .groups = "drop"
+  )
+
+elk_yearly <- elk |>
+  rename(
+    elk_mean = mean,
+    elk_lwr_cl = lwr_cl,
+    elk_upr_cl = upr_cl
+  )
+
+wolf_yearly <- wolf_long |>
+  group_by(year) |>
+  summarize(
+    wolf_mean_population = mean(wolf_population, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+combined_data <- beaver_yearly |>
+  full_join(fall_yearly, by = "year") |>
+  full_join(elk_yearly, by = "year") |>
+  full_join(wolf_yearly, by = "year")
+```
+
+```{r}
+glimpse(combined_data)
+head(combined_data)
+```
+
+```{r}
+colSums(is.na(combined_data))
+```
+
+```{r}
+combined_data |>
+  pivot_longer(-year) |>
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 20) +
+  facet_wrap(~name, scales = "free")
+```
+
+```{r}
+cor_data <- combined_data |>
+  select(-year) |>
+  drop_na()
+
+cor(cor_data)
+```
+
+```{r}
+library(GGally)
+
+ggpairs(cor_data)
+```
+
+```{r}
+install.packages("GGally")
+```
+
+```{r}
+library(GGally)
+```
+
+```{r}
+install.packages("GGally", dependencies = TRUE)
+```
+
+```{r}
+library(GGally)
+ggpairs(cor_data)
+```
+
+```{r}
+cor.test(
+  combined_data$wolf_mean_population,
+  combined_data$elk_mean,
+  use = "complete.obs"
+)
+```
+
+```{r}
+cor.test(
+  combined_data$elk_mean,
+  combined_data$fall_mean_height,
+  use = "complete.obs"
+)
+```
+
+```{r}
+cor.test(
+  combined_data$wolf_mean_population,
+  combined_data$fall_mean_height,
+  use = "complete.obs"
+)
+```
+
+```{r}
+ggplot(combined_data, aes(x = wolf_mean_population, y = elk_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Wolf vs Elk", x = "Wolf population", y = "Elk population")
+```
+
+```{r}
+ggplot(combined_data, aes(x = elk_mean, y = fall_mean_height)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Elk vs Vegetation", x = "Elk", y = "Plant height")
+```
+
+```{r}
+ggplot(combined_data, aes(x = wolf_mean_population, y = fall_mean_height)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Wolf vs Vegetation", x = "Wolf", y = "Plant height")
+```
+
+```{r}
+model <- lm(fall_mean_height ~ wolf_mean_population + elk_mean, data = combined_data)
+
+summary(model)
+```
+
+```{r}
+model2 <- lm(fall_mean_height ~ beaver_mean_height, data = combined_data)
+
+summary(model2)
+```
+
+```{r}
+combined_data |>
+  pivot_longer(-year) |>
+  ggplot(aes(x = year, y = value, color = name)) +
+  geom_line() +
+  facet_wrap(~name, scales = "free") +
+  labs(title = "Trends over time")
+```
+
+```{r}
+plot(model)
+```
+
+```{r}
+combined_data |>
+  pivot_longer(-year) |>
+  ggplot(aes(x = name, y = value)) +
+  geom_boxplot()
+```
+
+
+***1) Assess population growth patterns of 3 individual species\
+You can address questions like: Is population growth continuous or discrete? Ignoring interactions with other species, does it seem like population growth is exponential or logistic?***
+
+
+
+```{r}
+library(readr)
+
+wolf_raw <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv", show_col_types = FALSE)
+names(wolf_raw)
+head(wolf_raw)
+```
+
+```{r}
+library(tidyverse)
+library(readr)
+library(stringr)
+
+# ---------------------------
+# 1. Read files
+# ---------------------------
+
+wolf_raw <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv", show_col_types = FALSE)
+elk_raw  <- read_csv("corrected_elk_counts_09Jul2023_Park_only.csv", show_col_types = FALSE)
+tree_raw <- read_csv("fall_height_data_2001_2020.csv", show_col_types = FALSE)
+
+# ---------------------------
+# 2. Clean names
+# ---------------------------
+
+clean_names_simple <- function(df) {
+  names(df) <- names(df) |>
+    tolower() |>
+    str_replace_all("[^a-z0-9]+", "_") |>
+    str_replace_all("^_|_$", "")
+  df
+}
+
+wolf_raw <- clean_names_simple(wolf_raw)
+elk_raw  <- clean_names_simple(elk_raw)
+tree_raw <- clean_names_simple(tree_raw)
+
+# ---------------------------
+# 3. Show column names so we can see what exists
+# ---------------------------
+
+cat("WOLF COLUMNS:\n")
+print(names(wolf_raw))
+cat("\nELK COLUMNS:\n")
+print(names(elk_raw))
+cat("\nTREE COLUMNS:\n")
+print(names(tree_raw))
+
+cat("\nHEAD OF WOLF:\n")
+print(head(wolf_raw))
+cat("\nHEAD OF ELK:\n")
+print(head(elk_raw))
+cat("\nHEAD OF TREE:\n")
+print(head(tree_raw))
+```
+
+```{r}
+library(tidyverse)
+library(readr)
+library(stringr)
+
+# -----------------------------
+# 1. Read raw files
+# -----------------------------
+wolf_raw <- read_csv("wolf_1995_2022_population_ynp_nr_nnrr.csv", show_col_types = FALSE)
+elk_raw  <- read_csv("corrected_elk_counts_09Jul2023_Park_only.csv", show_col_types = FALSE)
+tree_raw <- read_csv("fall_height_data_2001_2020.csv", show_col_types = FALSE)
+
+# -----------------------------
+# 2. Clean column names
+# -----------------------------
+names(wolf_raw) <- names(wolf_raw) |> tolower() |> str_replace_all("[^a-z0-9]+", "_") |> str_replace_all("^_|_$", "")
+names(elk_raw)  <- names(elk_raw)  |> tolower() |> str_replace_all("[^a-z0-9]+", "_") |> str_replace_all("^_|_$", "")
+names(tree_raw) <- names(tree_raw) |> tolower() |> str_replace_all("[^a-z0-9]+", "_") |> str_replace_all("^_|_$", "")
+
+# -----------------------------
+# 3. Clean wolves
+#    Keep Yellowstone total row,
+#    then pivot years into a year column
+# -----------------------------
+wolf_yearly <- wolf_raw %>%
+  filter(str_detect(site, regex("yellowstone", ignore_case = TRUE))) %>%
+  pivot_longer(
+    cols = -site,
+    names_to = "year",
+    values_to = "wolf_mean"
+  ) %>%
+  mutate(
+    year = as.integer(year),
+    wolf_mean = as.numeric(wolf_mean)
+  ) %>%
+  filter(!is.na(year), !is.na(wolf_mean)) %>%
+  arrange(year)
+
+# -----------------------------
+# 4. Clean elk
+#    Use yearly mean counts
+# -----------------------------
+elk_yearly <- elk_raw %>%
+  transmute(
+    year = as.integer(year),
+    elk_mean = as.numeric(mean),
+    elk_lwrcl = as.numeric(lwrcl),
+    elk_uprcl = as.numeric(uprcl)
+  ) %>%
+  filter(!is.na(year)) %>%
+  arrange(year)
+
+# -----------------------------
+# 5. Clean trees
+#    Summarize fall_height by year
+# -----------------------------
+tree_yearly <- tree_raw %>%
+  transmute(
+    year = as.integer(year),
+    fall_height = as.numeric(fall_height)
+  ) %>%
+  filter(!is.na(year), !is.na(fall_height)) %>%
+  group_by(year) %>%
+  summarise(
+    tree_mean = mean(fall_height, na.rm = TRUE),
+    tree_sd = sd(fall_height, na.rm = TRUE),
+    tree_n = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(year)
+
+# -----------------------------
+# 6. Join them WITHOUT losing years
+#    full_join keeps as many rows as possible
+# -----------------------------
+wolves_elk_trees_full <- full_join(wolf_yearly, elk_yearly, by = "year") %>%
+  full_join(tree_yearly, by = "year") %>%
+  arrange(year)
+
+# -----------------------------
+# 7. Optional analysis dataset:
+#    only keep years where all 3 exist
+# -----------------------------
+wolves_elk_trees_complete <- wolves_elk_trees_full %>%
+  filter(!is.na(wolf_mean), !is.na(elk_mean), !is.na(tree_mean)) %>%
+  arrange(year)
+
+# -----------------------------
+# 8. Save both versions
+# -----------------------------
+write_csv(wolves_elk_trees_full, "wolves_elk_trees_full.csv")
+write_csv(wolves_elk_trees_complete, "wolves_elk_trees_complete.csv")
+
+# -----------------------------
+# 9. Check results
+# -----------------------------
+cat("Rows in full dataset:", nrow(wolves_elk_trees_full), "\n")
+cat("Rows in complete dataset:", nrow(wolves_elk_trees_complete), "\n\n")
+
+print(wolf_yearly)
+print(elk_yearly)
+print(tree_yearly)
+print(wolves_elk_trees_full)
+print(wolves_elk_trees_complete)
+
+# -----------------------------
+# 10. Quick plots
+# -----------------------------
+
+ggplot(wolves_elk_trees_full, aes(x = year, y = wolf_mean)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Wolf Population by Year", x = "Year", y = "Wolf Population")
+
+ggplot(wolves_elk_trees_full, aes(x = year, y = elk_mean)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Elk Population by Year", x = "Year", y = "Elk Mean Count")
+
+ggplot(wolves_elk_trees_full, aes(x = year, y = tree_mean)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Tree Height by Year", x = "Year", y = "Mean Fall Height")
+
+ggplot(wolves_elk_trees_complete, aes(x = wolf_mean, y = elk_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Wolves vs Elk", x = "Wolf Population", y = "Elk Mean Count")
+
+ggplot(wolves_elk_trees_complete, aes(x = elk_mean, y = tree_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Elk vs Trees", x = "Elk Mean Count", y = "Mean Tree Height")
+
+ggplot(wolves_elk_trees_complete, aes(x = wolf_mean, y = tree_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Wolves vs Trees", x = "Wolf Population", y = "Mean Tree Height")
+```
+
+```{r}
+nrow(wolves_elk_trees_full)
+nrow(wolves_elk_trees_complete)
+head(wolves_elk_trees_complete)
+```
+
+```{r}
+wolves_elk_trees_full
+```
+
+```{r}
+wolves_elk_trees_complete
+```
+
+```{r}
+range(wolf_yearly$year, na.rm = TRUE)
+range(elk_yearly$year, na.rm = TRUE)
+range(tree_yearly$year, na.rm = TRUE)
+
+wolf_yearly
+elk_yearly
+tree_yearly
+```
+
+```{r}
+wolves_elk_trees_full %>%
+  select(year, wolf_mean, elk_mean, tree_mean)
+```
+
+```{r}
+ggplot(wolves_elk_trees_full, aes(x = year, y = wolf_mean)) +
+  geom_line() + geom_point()
+
+ggplot(wolves_elk_trees_full, aes(x = year, y = elk_mean)) +
+  geom_line() + geom_point()
+
+ggplot(wolves_elk_trees_full, aes(x = year, y = tree_mean)) +
+  geom_line() + geom_point()
+```
+
+```{r}
+ggplot(wolves_elk_trees_complete, aes(x = wolf_mean, y = elk_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+ggplot(wolves_elk_trees_complete, aes(x = elk_mean, y = tree_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+range(wolf_yearly$year, na.rm = TRUE)
+range(elk_yearly$year, na.rm = TRUE)
+range(tree_yearly$year, na.rm = TRUE)
+```
+
+```{r}
+tree_yearly <- tree_raw %>%
+  filter(!is.na(year), !is.na(fall_height)) %>%
+  group_by(year) %>%
+  summarise(
+    tree_mean = mean(fall_height, na.rm = TRUE),
+    tree_sd = sd(fall_height, na.rm = TRUE),
+    tree_n = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(year)
+```
+
+```{r}
+wolves_elk_trees_full <- full_join(wolf_yearly, elk_yearly, by = "year") %>%
+  full_join(tree_yearly, by = "year") %>%
+  arrange(year)
+
+wolves_elk_trees_complete <- wolves_elk_trees_full %>%
+  filter(!is.na(wolf_mean), !is.na(elk_mean), !is.na(tree_mean))
+```
+
+```{r}
+range(tree_yearly$year)
+nrow(wolves_elk_trees_complete)
+```
+
+```{r}
+nrow(wolves_elk_trees_complete)
+```
+
+```{r}
+wolves_elk_trees_complete
+```
+
+```{r}
+write.csv(wolves_elk_trees_complete, "wolves_elk_trees_complete.csv", row.names = FALSE)
+```

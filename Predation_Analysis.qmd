@@ -1,0 +1,461 @@
+---
+title: "Predation Analysis: Wolves, Elk, and Trees"
+format: html
+---
+
+## Data Upload O
+
+```{r}
+library(tidyverse)
+
+# load cleaned dataset
+predation_data <- read.csv("wolves_elk_trees_complete.csv")
+
+# basic checks
+nrow(predation_data)
+range(predation_data$year)
+
+# print full table (all rows)
+predation_data
+```
+
+#### This was to create a clean starting point for R to work with. **`library(tidyverse). This data was already cleaned then added here.`** **`-read.csv("wolves_elk_trees_complete.csv")`** Imports your dataset into R so you can work with it.
+
+-   **`nrow(predation_data)`** Checks how many rows you have → makes sure the file loaded correctly (no missing data or truncation). -**`range(predation_data$year)`** Confirms your time span → important for ecological trends (wolves/elk over years). -**`predation_data` (printing the table)** Lets you visually inspect column names, formatting, and values before analysis.
+
+## Predation Statistical Analysis O
+
+### Wolves vs Elk: Predator-Prey Relationship
+
+```{r}
+ggplot(predation_data, aes(x = wolf_mean, y = elk_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Wolves vs Elk",
+       x = "Wolf Population",
+       y = "Elk Count")
+```
+
+#### Contrary to what was expected, this plot only shows a slightly positive trend between wolves and elk. The data points are scattered, suggesting a weak relationship likely influenced by other factors or time lags rather than direct predation.
+
+### Elk vs. Trees: Predator-Prey Relationship O
+
+`{##Elk vs. Trees: {r} ggplot(predation_data, aes(x = elk_mean, y = tree_mean)) +   geom_point() +   geom_smooth(method = "lm", se = FALSE) +   labs(title = "Elk vs Trees",        x = "Elk Count",        y = "Tree Height")`
+
+```{r}
+ggplot(predation_data, aes(x = wolf_mean, y = tree_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Wolves vs Trees",
+       x = "Wolf Population",
+       y = "Tree Height")
+```
+
+#### The plot shows a negative relationship between wolves and tree height. As wolf populations increase, tree height tends to increase less/varies; suggesting wolves may indirectly support tree growth by reducing elk browsing, though the relationship is somewhat scattered.
+
+### Pairwise Correlations Among Wolves, Elk, and Trees O
+
+```{r}
+cor(predation_data$wolf_mean, predation_data$elk_mean)
+cor(predation_data$elk_mean, predation_data$tree_mean)
+cor(predation_data$wolf_mean, predation_data$tree_mean)
+```
+
+#### There is a strong positive correlation between wolves and elk (r ≈ 0.71), and strong negative correlations between elk and trees (r ≈ −0.93) and wolves and trees (r ≈ −0.69). This suggests elk reduce tree growth, while wolves may indirectly benefit trees by influencing elk populations.
+
+### Comparing Changes in Wolves, Elk, and Trees Over Time Via Standardization O
+
+```{r}
+predation_scaled <- predation_data %>%
+  select(year, wolf_mean, elk_mean, tree_mean) %>%
+  mutate(
+    wolf_z = as.numeric(scale(wolf_mean)),
+    elk_z = as.numeric(scale(elk_mean)),
+    tree_z = as.numeric(scale(tree_mean))
+  ) %>%
+  pivot_longer(cols = c(wolf_z, elk_z, tree_z),
+               names_to = "variable",
+               values_to = "z_value")
+
+ggplot(predation_scaled, aes(x = year, y = z_value, color = variable)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Standardized Trends in Wolves, Elk, and Trees",
+       x = "Year",
+       y = "Standardized Value")
+```
+
+#### Over time, wolf populations generally increase while elk populations decrease, and tree height increases. This pattern supports a trophic cascade, where more wolves reduce elk, allowing trees to recover.
+
+### **Assessing Population Change Over Time Across Trophic Levels O**
+
+```{r}
+summary(lm(wolf_mean ~ year, data = predation_data))
+summary(lm(elk_mean ~ year, data = predation_data))
+summary(lm(tree_mean ~ year, data = predation_data))
+```
+
+#### Wolf populations show a slight **decrease**, elk populations show a strong **decrease**, and tree height shows a strong **increase** over time. This suggests reduced elk browsing is associated with increased tree growth (trophic cascade).
+
+### Impact of Elk/Wolves on Tree Growth X
+
+```{r}
+summary(lm(tree_mean ~ elk_mean, data = predation_data))
+summary(lm(tree_mean ~ wolf_mean, data = predation_data))
+```
+
+#### Tree growth is strongly and significantly **negatively related to elk** (higher elk → lower tree height), while it is also **negatively related to wolves**, but more weakly. This suggests elk have a stronger direct impact on reducing tree growth than wolves.
+
+### Combining Impacts of Wolves/Elk on Tree Growth X
+
+```{r}
+summary(lm(tree_mean ~ wolf_mean + elk_mean, data = predation_data))
+```
+
+#### When both variables are included, **elk remain a strong, significant negative predictor of tree growth**, while **wolves are not significant**. This suggests elk drive changes in tree height, and wolves influence trees mainly indirectly through elk.
+
+### **Lagged Regression of Elk Response to Wolf Abundance O**
+
+```{r}
+predation_lag <- predation_data %>%
+  arrange(year) %>%
+  mutate(
+    wolf_lag1 = lag(wolf_mean, 1),
+    elk_lag1 = lag(elk_mean, 1)
+  )
+```
+
+```{r}
+ggplot(predation_lag, aes(x = wolf_lag1, y = elk_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Current Elk vs Previous Year's Wolves",
+       x = "Previous Year's Wolf Population",
+       y = "Current Elk Count")
+```
+
+#### There is a positive relationship between current elk counts and the previous year’s wolf population, suggesting no clear delayed negative predator effect. This indicates the expected lagged predator–prey response is weak or not captured here.
+
+### Lagged Effects of Elk on Tree Growth O
+
+```{r}
+ggplot(predation_lag, aes(x = elk_lag1, y = tree_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Current Trees vs Previous Year's Elk",
+       x = "Previous Year's Elk Count",
+       y = "Current Tree Height")
+```
+
+#### There is a strong negative relationship between current tree height and the previous year’s elk population, suggesting elk have a delayed negative effect on tree growth.
+
+### Changes in Wolves and Elk (Year-to-Year) X
+
+```{r}
+predation_change <- predation_data %>%
+  arrange(year) %>%
+  mutate(
+    d_wolf = wolf_mean - lag(wolf_mean),
+    d_elk = elk_mean - lag(elk_mean),
+    d_tree = tree_mean - lag(tree_mean)
+  )
+```
+
+```{r}
+ggplot(predation_change, aes(x = d_wolf, y = d_elk)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Change in Wolves vs Change in Elk",
+       x = "Yearly Change in Wolves",
+       y = "Yearly Change in Elk")
+```
+
+#### There is little to no clear relationship between yearly changes in wolves and elk, as shown by the nearly flat trend and scattered data. This suggests short-term changes in wolves do not strongly predict elk changes.
+
+### Year-to-Year Changes in Elk and Tree Growth X
+
+```{r}
+ggplot(predation_change, aes(x = d_elk, y = d_tree)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Change in Elk vs Change in Trees",
+       x = "Yearly Change in Elk",
+       y = "Yearly Change in Trees")
+```
+
+#### There is little to no clear relationship between yearly changes in elk and trees, as shown by the weak, nearly flat trend. This suggests short-term elk changes do not strongly predict tree growth changes.
+
+### Elk Population Trends With Confidence Limits X
+
+```{r}
+ggplot(predation_data, aes(x = year, y = elk_mean)) +
+  geom_line() +
+  geom_point() +
+  geom_ribbon(aes(ymin = elk_lwrcl, ymax = elk_uprcl), alpha = 0.2) +
+  labs(title = "Elk Population Over Time with Confidence Limits",
+       x = "Year",
+       y = "Elk Count")
+```
+
+#### Elk populations show a strong decline over time, with variability decreasing as the population stabilizes at lower levels.
+
+### Nonlinear Relationship Between Wolves and Elk O
+
+```{r}
+ggplot(predation_data, aes(x = wolf_mean, y = elk_mean)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Wolves vs Elk with Nonlinear Fit",
+       x = "Wolf Population",
+       y = "Elk Count")
+```
+
+#### The relationship between wolves and elk appears nonlinear, with elk counts increasing at moderate wolf levels and then declining at higher wolf populations. Suggesting a more complex predator–prey dynamic than just a simple linear relationship.
+
+### Nonlinear Relationship Between Elk and Tree Growth O
+
+```{r}
+ggplot(predation_data, aes(x = elk_mean, y = tree_mean)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Elk vs Trees with Nonlinear Fit",
+       x = "Elk Count",
+       y = "Tree Height")
+```
+
+#### Tree height decreases nonlinearly as elk populations increase, with a steep decline at lower elk levels that gradually levels off. This suggests elk have a strong but diminishing negative effect on tree growth
+
+### Early vs. Late Period Comparison of Wolves, Elk, and Trees X
+
+```{r}
+predation_period <- predation_data %>%
+  mutate(period = if_else(year <= 2010, "Early", "Late"))
+```
+
+```{r}
+predation_period %>%
+  group_by(period) %>%
+  summarise(
+    mean_wolf = mean(wolf_mean),
+    mean_elk = mean(elk_mean),
+    mean_tree = mean(tree_mean)
+  )
+```
+
+#### In the late period, wolf and elk populations decrease, while tree height increases. This supports a trophic cascade, where fewer elk allow trees to grow more.
+
+### Effects of Wolves and Time on Elk, and Elk and Time on Trees O
+
+```{r}
+summary(lm(elk_mean ~ wolf_mean + year, data = predation_data))
+summary(lm(tree_mean ~ elk_mean + year, data = predation_data))
+```
+
+#### Elk populations are strongly driven by time (declining over years), while wolves are not a significant predictor. Tree growth is strongly increase, driven by time, where elk having only a weak, nonsignificant negative effect.
+
+### Linear Models of Population Trends and Trophic Interactions X
+
+```{r}
+summary(lm(wolf_mean ~ year, data = predation_data))
+summary(lm(elk_mean ~ year, data = predation_data))
+summary(lm(tree_mean ~ year, data = predation_data))
+summary(lm(tree_mean ~ elk_mean, data = predation_data))
+summary(lm(tree_mean ~ wolf_mean + elk_mean, data = predation_data))
+```
+
+#### Wolf and elk populations both significantly decline over time, while tree height significantly increases. Tree growth is strongly negatively related to elk, and when both predators are included, only elk remains significant. This indicates that elk drive tree dynamics, with wolves acting indirectly through elk.
+
+## SummaryX
+
+```{r}
+summary(predation_data)
+
+
+nrow(predation_data)
+range(predation_data$year)
+```
+
+```{r}
+library(broom)
+```
+
+```{r}
+predation_lag <- predation_data %>%
+  arrange(year) %>%
+  mutate(
+    wolf_lag1 = lag(wolf_mean, 1),
+    elk_lag1 = lag(elk_mean, 1)
+  )
+```
+
+```{r}
+m1 <- lm(wolf_mean ~ year, data = predation_data)
+m2 <- lm(elk_mean ~ year, data = predation_data)
+m3 <- lm(tree_mean ~ year, data = predation_data)
+m4 <- lm(tree_mean ~ elk_mean, data = predation_data)
+m5 <- lm(tree_mean ~ wolf_mean, data = predation_data)
+m6 <- lm(tree_mean ~ wolf_mean + elk_mean, data = predation_data)
+m7 <- lm(elk_mean ~ wolf_mean + year, data = predation_data)
+m8 <- lm(tree_mean ~ elk_mean + year, data = predation_data)
+m9 <- lm(elk_mean ~ wolf_lag1, data = predation_lag)
+m10 <- lm(tree_mean ~ elk_lag1, data = predation_lag)
+```
+
+```{r}
+model_fit_summary <- tibble(
+  model = c(
+    "Wolves ~ Year",
+    "Elk ~ Year",
+    "Trees ~ Year",
+    "Trees ~ Elk",
+    "Trees ~ Wolves",
+    "Trees ~ Wolves + Elk",
+    "Elk ~ Wolves + Year",
+    "Trees ~ Elk + Year",
+    "Elk ~ Lagged Wolves",
+    "Trees ~ Lagged Elk"
+  ),
+  r_squared = c(
+    glance(m1)$r.squared,
+    glance(m2)$r.squared,
+    glance(m3)$r.squared,
+    glance(m4)$r.squared,
+    glance(m5)$r.squared,
+    glance(m6)$r.squared,
+    glance(m7)$r.squared,
+    glance(m8)$r.squared,
+    glance(m9)$r.squared,
+    glance(m10)$r.squared
+  ),
+  adj_r_squared = c(
+    glance(m1)$adj.r.squared,
+    glance(m2)$adj.r.squared,
+    glance(m3)$adj.r.squared,
+    glance(m4)$adj.r.squared,
+    glance(m5)$adj.r.squared,
+    glance(m6)$adj.r.squared,
+    glance(m7)$adj.r.squared,
+    glance(m8)$adj.r.squared,
+    glance(m9)$adj.r.squared,
+    glance(m10)$adj.r.squared
+  ),
+  p_value = c(
+    glance(m1)$p.value,
+    glance(m2)$p.value,
+    glance(m3)$p.value,
+    glance(m4)$p.value,
+    glance(m5)$p.value,
+    glance(m6)$p.value,
+    glance(m7)$p.value,
+    glance(m8)$p.value,
+    glance(m9)$p.value,
+    glance(m10)$p.value
+  )
+)
+
+model_fit_summary
+```
+
+```{r}
+model_coeff_summary <- bind_rows(
+  tidy(m1) %>% mutate(model = "Wolves ~ Year"),
+  tidy(m2) %>% mutate(model = "Elk ~ Year"),
+  tidy(m3) %>% mutate(model = "Trees ~ Year"),
+  tidy(m4) %>% mutate(model = "Trees ~ Elk"),
+  tidy(m5) %>% mutate(model = "Trees ~ Wolves"),
+  tidy(m6) %>% mutate(model = "Trees ~ Wolves + Elk"),
+  tidy(m7) %>% mutate(model = "Elk ~ Wolves + Year"),
+  tidy(m8) %>% mutate(model = "Trees ~ Elk + Year"),
+  tidy(m9) %>% mutate(model = "Elk ~ Lagged Wolves"),
+  tidy(m10) %>% mutate(model = "Trees ~ Lagged Elk")
+) %>%
+  select(model, term, estimate, std.error, statistic, p.value)
+
+model_coeff_summary
+```
+
+#### Across 2001–2020 (n = 20; 20 years), wolves and elk generally decline while tree height increases. Model results consistently show **strong negative effects of elk on trees**, while wolves have weaker or indirect effects. Time is a major driver of both declining elk and increasing tree growth, and lagged models suggest elk impacts on trees may persist over time.
+
+### Cleaned Summary O
+
+```{r}
+analysis_summary <- tibble(
+  test = c(
+    "Wolf trend over time",
+    "Elk trend over time",
+    "Tree trend over time",
+    "Effect of elk on trees",
+    "Effect of wolves on trees",
+    "Combined effect of wolves and elk on trees",
+    "Effect of wolves on elk controlling for time",
+    "Effect of elk on trees controlling for time",
+    "Lagged effect of wolves on elk",
+    "Lagged effect of elk on trees"
+  ),
+  key_result = c(
+    "Wolves decline over time",
+    "Elk decline over time",
+    "Trees increase over time",
+    "Higher elk predicts lower tree height",
+    "Higher wolves predicts lower tree height in simple model",
+    "Elk remains significant, wolves do not",
+    "Year significant, wolves not significant",
+    "Year significant, elk marginal after controlling for time",
+    "Lagged wolves positively predict elk",
+    "Lagged elk strongly negatively predicts trees"
+  ),
+  r_squared = round(c(
+    glance(m1)$r.squared,
+    glance(m2)$r.squared,
+    glance(m3)$r.squared,
+    glance(m4)$r.squared,
+    glance(m5)$r.squared,
+    glance(m6)$r.squared,
+    glance(m7)$r.squared,
+    glance(m8)$r.squared,
+    glance(m9)$r.squared,
+    glance(m10)$r.squared
+  ), 3),
+  model_p = signif(c(
+    glance(m1)$p.value,
+    glance(m2)$p.value,
+    glance(m3)$p.value,
+    glance(m4)$p.value,
+    glance(m5)$p.value,
+    glance(m6)$p.value,
+    glance(m7)$p.value,
+    glance(m8)$p.value,
+    glance(m9)$p.value,
+    glance(m10)$p.value
+  ), 3)
+)
+
+analysis_summary
+```
+
+#### Overall, wolves and elk decline over time while trees increase. Elk consistently have a strong negative effect on tree growth, whereas wolves are not significant when accounting for elk or time, indicating their effect is indirect. Time is a major driver of trends, and lagged results suggest elk impacts on trees persist across years.
+
+```{r}
+knitr::kable(analysis_summary, digits = 3, caption = "Summary of Statistical Analyses")
+```
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).data \<- read.csv("yellowstone_clean.csv")
